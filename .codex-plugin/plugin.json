@@ -1,0 +1,38 @@
+{
+  "name": "tesseract",
+  "version": "0.1.0",
+  "description": "Tesseract brings professional creative tools into your agent workflow. Work with video layers, compositions, keyframes, and audio in one connected project. Preview the result, direct a revision, and render the finished video locally.",
+  "author": {
+    "name": "Mirage"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Tesseract",
+    "shortDescription": "Make videos and editable motion graphics",
+    "longDescription": "Tesseract brings professional creative tools into your agent workflow. Work with video layers, compositions, keyframes, and audio in one connected project. Preview the result, direct a revision, and render the finished video locally.",
+    "developerName": "Mirage",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Make a video with Tesseract",
+      "Add a graphic overlay to my video with Tesseract",
+      "Review and improve the motion in my Tesseract project"
+    ],
+    "brandColor": "#1D1F20",
+    "websiteURL": "https://mirage.app",
+    "privacyPolicyURL": "https://mirage.app/legal/privacy-policy",
+    "termsOfServiceURL": "https://mirage.app/legal/tesseract-terms",
+    "logo": "./assets/plugin-icon.svg",
+    "composerIcon": "./assets/plugin-icon.svg"
+  },
+  "homepage": "https://mirage.app",
+  "repository": "https://github.com/mirage-hq/tesseract",
+  "keywords": [
+    "video",
+    "motion-graphics",
+    "editing"
+  ]
+}

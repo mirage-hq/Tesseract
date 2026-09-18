@@ -1,0 +1,6 @@
+interface:
+  display_name: "Tesseract: Motion Graphics"
+  short_description: "Create editable motion graphics with Tesseract"
+  icon_small: "./assets/icon.svg"
+  icon_large: "./assets/icon.svg"
+  default_prompt: "Use $tesseract-motion to create and preview editable motion graphics."
