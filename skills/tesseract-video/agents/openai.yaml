@@ -1,0 +1,6 @@
+interface:
+  display_name: "Tesseract: Edit Video"
+  short_description: "Edit footage into finished videos with Tesseract"
+  icon_small: "./assets/icon.svg"
+  icon_large: "./assets/icon.svg"
+  default_prompt: "Use $tesseract-video to edit my footage and preview the finished video."
