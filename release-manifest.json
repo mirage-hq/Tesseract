@@ -4,19 +4,19 @@
   "artifacts": [
     {
       "name": "tesseract-0.1.0-darwin-arm64.zip",
-      "sha256": "4c2102789630ef9e441dd934ee75feb2fe026604471c416d3d5a38d594c055fa"
+      "sha256": "c3511ea81b1e2987c4b255a3dd6ace1e20efdfc372b9051c4b5233a9a5d6f12f"
     },
     {
       "name": "tesseract-0.1.0-darwin-x86_64.zip",
-      "sha256": "3f97be1b4fc4cebcbbf650460ff9341e551600bde5eeeb4362e824c86c332a71"
+      "sha256": "ce3405e7ba00e5ffb902d874c99f5699fc576b17c1c7ae7fa43574159d1a0bf2"
     },
     {
       "name": "tesseract-0.1.0-windows-x86_64.zip",
-      "sha256": "638fd5121d6d16669c410cf59643629a876f8bd94e80f4e96850e29e8ad7ce75"
+      "sha256": "36becb731f7fdeeedbd6beac75aff54eec11b1801583c2623b72d4fff3da8923"
     },
     {
       "name": "tesseract.zip",
-      "sha256": "e2e306cde4e392b2382e4a37ad335878d2199edd0fbc1db18e40cc7445076d8b"
+      "sha256": "4bb50ed3064c6e4b944142998f6524d95a158fe98f96622ef2fca412851e2efc"
     }
   ]
 }
