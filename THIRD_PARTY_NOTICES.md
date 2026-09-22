@@ -4,8 +4,8 @@ This document describes Tesseract’s packaging. The upstream license and notice
 texts are copied separately into `licenses/`; this document does not replace them.
 All paths below refer to files inside the CLI download and installed bundle.
 
-Tesseract uses FFmpeg libraries and the FFmpeg/FFprobe programs under the GNU Lesser
-General Public License version 2.1 or later. See `licenses/ffmpeg/` for the license
+Tesseract uses FFmpeg libraries under the GNU Lesser General Public License
+version 2.1 or later. See `licenses/ffmpeg/` for the license
 and upstream attribution. In particular, this software is based in part on the
 work of the Independent JPEG Group. The three IJG-derived FFmpeg source files
 have not been modified by Tesseract.
@@ -37,7 +37,7 @@ marked as modified; their source archive contains the modifications.
 FFmpeg remains dynamically linked. You may replace it with an interface-compatible
 modified build. The installed executable resides in a versioned directory under
 `~/Library/Application Support/Tesseract/public-cli/`; its `lib/` directory contains
-the FFmpeg libraries and `bin/` contains Tesseract and the helpers. The launcher in
+the FFmpeg libraries and `bin/` contains Tesseract. The launcher in
 `~/Library/Application Support/Tesseract/bin/` is a symlink to that executable.
 
 Keep the installed library filenames and use `@executable_path/../lib/` for
@@ -48,10 +48,17 @@ Keep a separate copy of a modified installation when upgrading or reinstalling.
 
 On Windows the installed executable resides under
 `%LOCALAPPDATA%\Tesseract\public-cli\<version>-x86_64\bin\` together with the FFmpeg
-DLLs, the helpers, and the Visual C++ runtime; Windows loads DLLs from that
+DLLs and the Visual C++ runtime; Windows loads DLLs from that
 directory first, so an interface-compatible replacement keeps the filenames. The
 launcher `%LOCALAPPDATA%\Tesseract\bin\tsrct.cmd` runs that executable. Nothing
 is code signed on Windows.
+
+On Linux, the default installation is under
+`~/.local/share/Tesseract/public-cli/<version>-x86_64/` (or under
+`$XDG_DATA_HOME/Tesseract/`). Replace interface-compatible FFmpeg `.so` files in
+`lib/`, retaining their SONAME filenames and `$ORIGIN` RUNPATH. Executables use
+`$ORIGIN/../lib`; there is no global library-path wrapper. Linux system libraries
+and the Vulkan loader/driver are host prerequisites, not part of this bundle.
 
 Nothing in these notices restricts modification for your own use or reverse
 engineering for debugging modifications as permitted by the LGPL, or rights

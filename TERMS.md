@@ -180,7 +180,7 @@ Email: [DMCA@mirage.app](mailto:DMCA@mirage.app)
 
 **8.4** UNDER FEDERAL LAW, IF YOU KNOWINGLY MISREPRESENT THAT ONLINE MATERIAL IS INFRINGING, YOU MAY BE SUBJECT TO CRIMINAL PROSECUTION FOR PERJURY AND CIVIL PENALTIES, INCLUDING MONETARY DAMAGES, COURT COSTS, AND ATTORNEYS’ FEES. Please note that this procedure is exclusively for notifying Mirage and its affiliates that your copyrighted material has been infringed. The preceding requirements are intended to comply with Mirage’s rights and obligations under the DMCA, including 17 U.S.C. §512, but do not constitute legal advice. It may be advisable to contact an attorney regarding your rights and obligations under the DMCA and other applicable laws.
 
-**8.5** In accordance with the DMCA and other applicable laws, Mirage has adopted a policy of terminating, in appropriate circumstances, Users who are to be repeat infringers. Mirage may also  terminate the Agreement with any Users who infringe any Intellectual Property Rights of others, whether or not there is any repeat infringement.
+**8.5** In accordance with the DMCA and other applicable laws, Mirage has adopted a policy of terminating, in appropriate circumstances, Users who are to be repeat infringers. Mirage may also terminate the Agreement with any Users who infringe any Intellectual Property Rights of others, whether or not there is any repeat infringement.
 
 ## 9. Third-Party Components
 

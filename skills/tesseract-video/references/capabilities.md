@@ -25,8 +25,9 @@ that every requested combination renders correctly; inspect the actual result.
   Installed system fonts are not discovered
   automatically. Audio and images use [media import](media-import.md).
   Import helper-generated files before placing layers.
-- The CLI exports MP4 or ProRes 4444 MOV at automatic resolution/frame rate; inspect
-  encoded dimensions rather than assuming they equal the canvas. Audio-only export, range export,
+- The CLI exports H.264 MP4 or ProRes 4444 MOV at 720p, 1080p, or 4K and
+  24, 30, or 60 fps (default: 1080p/30/MP4). MP4 bitrate scales automatically.
+  Inspect the encoded output before delivery. Audio-only export, range export,
   and geometry inspection are not exposed.
 - Canvas choices are listed in [local operation](local-operation.md). A bottom
   shape provides a different background; the renderer requires an absent or
