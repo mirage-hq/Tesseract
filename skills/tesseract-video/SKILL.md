@@ -5,6 +5,8 @@ description: Edit existing footage into finished videos locally with Tesseract. 
 
 # Edit video with Tesseract
 
+The CLI may send basic usage telemetry for some commands. You can provide optional attribution via `TESSERACT_SKILL=tesseract-video` and the [other attribution variables](references/telemetry.md). Respect the CLI's telemetry opt-out setting; never enable telemetry on the user's behalf.
+
 Make a deliberate edit from the user's material. Tesseract is the local editing and rendering engine; the agent supplies editorial judgment. The output is both a playable video and its editable project.
 
 ## Start with the material

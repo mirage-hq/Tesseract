@@ -1,22 +1,26 @@
 {
   "schema_version": 1,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "artifacts": [
     {
-      "name": "tesseract-0.1.0-darwin-arm64.zip",
-      "sha256": "c3511ea81b1e2987c4b255a3dd6ace1e20efdfc372b9051c4b5233a9a5d6f12f"
+      "name": "tesseract-0.2.0-darwin-arm64.zip",
+      "sha256": "c5a0ab2d7840a3bfee60270d8f9b365f4e5ce8833142bbf9a42beea3d5419ca0"
     },
     {
-      "name": "tesseract-0.1.0-darwin-x86_64.zip",
-      "sha256": "ce3405e7ba00e5ffb902d874c99f5699fc576b17c1c7ae7fa43574159d1a0bf2"
+      "name": "tesseract-0.2.0-darwin-x86_64.zip",
+      "sha256": "15d33a41a90d62d5bcaffcab0410c732fbd77ee029a8d31e2541012e27a46a8b"
     },
     {
-      "name": "tesseract-0.1.0-windows-x86_64.zip",
-      "sha256": "36becb731f7fdeeedbd6beac75aff54eec11b1801583c2623b72d4fff3da8923"
+      "name": "tesseract-0.2.0-linux-x86_64.zip",
+      "sha256": "7ba15a9ff68a4a999fa965df702c304ba5b0efbba7d974782c893a21afec572f"
+    },
+    {
+      "name": "tesseract-0.2.0-windows-x86_64.zip",
+      "sha256": "35822d306209476d5c80ac3fafed6be6110afd70840f6c7179e5a35caf57b988"
     },
     {
       "name": "tesseract.zip",
-      "sha256": "4bb50ed3064c6e4b944142998f6524d95a158fe98f96622ef2fca412851e2efc"
+      "sha256": "dadea3c45bad8afbc1f61b65db8ee6ab4a9a3666582a8f3e4b521f9c484d619f"
     }
   ]
 }

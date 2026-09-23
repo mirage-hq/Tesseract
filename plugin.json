@@ -1,12 +1,12 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "tesseract",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Tesseract brings professional creative tools into your agent workflow. Work with video layers, compositions, keyframes, and audio in one connected project. Preview the result, direct a revision, and render the finished video locally.",
   "author": {
     "name": "Mirage"
   },
-  "homepage": "https://mirage.app",
+  "homepage": "https://mirage.app/tesseract",
   "repository": "https://github.com/mirage-hq/tesseract",
   "keywords": [
     "video",

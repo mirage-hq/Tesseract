@@ -12,6 +12,8 @@ Tesseract uses `tsrct` to edit and render portable `.tsrct` projects. Follow
 check its version, or install the matching CLI release. Use the resolved
 executable path in the commands below; it does not have to be on PATH.
 
+See [telemetry and attribution](telemetry.md) for optional CLI attribution and user opt-out.
+
 ## Scope
 
 For creating or restructuring layers, read [FX authoring](fx-authoring.md).
@@ -69,7 +71,7 @@ These are workspace conventions, not file-format requirements or mandatory files
 ## Before editing
 
 Run `tsrct --version`, `tsrct project --help`, and `tsrct export --help`.
-If `import-asset` or `--codec` is missing, follow [installation](installation.md).
+If `import-asset` or `--format` is missing, follow [installation](installation.md).
 The examples below run from the chosen project root; adapt filenames to the task.
 Create an empty document for new work, or inspect the intended existing document:
 
@@ -160,8 +162,8 @@ tsrct export \
 For transparent motion graphics on macOS, export ProRes 4444:
 
 ```sh
-tsrct export --project project.tsrct --codec prores4444 --output finished.mov
-tsrct export --project project.tsrct --codec prores4444 --fx-solo main:3 --output overlay.mov
+tsrct export --project project.tsrct --format prores --output finished.mov
+tsrct export --project project.tsrct --format prores --fx-solo main:3 --output overlay.mov
 ```
 
 Full-project export includes the mix and the black canvas background. For alpha,
@@ -169,9 +171,17 @@ use solo export of the overlay layer or a group containing the graphic. Solo use
 layer/group's active window, preserves canvas placement, and omits audio. Inspect
 its alpha channel and composite over contrasting backgrounds before delivery.
 
-Export uses the renderer's automatic resolution and frame rate; canvas dimensions
-do not guarantee matching encoded dimensions. Inspect the resulting MP4 against
-the delivery brief. This CLI does not expose resolution or FPS override flags.
+Export defaults to 1080p, 30 fps, and H.264 MP4. Select `--resolution 720p|1080p|4k`,
+`--fps 24|30|60`, and `--format mp4|prores`. Resolution preserves the project aspect
+ratio: landscape 4K is 3840×2160, portrait 4K is 2160×3840, and square 4K is
+2160×2160. Keep the authoring canvas unchanged. MP4 bitrate scales automatically
+with output size and frame rate (10 Mbps at 1080p30, up to 60 Mbps); ProRes uses
+its codec's quality settings. HDR and fractional/source-matched FPS are not exposed.
+Inspect the encoded dimensions, frame rate, audio, and visuals before delivery.
+
+```sh
+tsrct export --project project.tsrct --resolution 4k --fps 60 --output finished.mp4
+```
 
 Follow [review and delivery](review-and-delivery.md#handoff) for final checks and
 presenting the result from this project root.
