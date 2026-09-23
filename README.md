@@ -24,7 +24,9 @@ Tesseract brings professional creative tools into your agent workflow. Work with
 
 ## Get started
 
-**macOS or Windows, running locally.** In ChatGPT/Codex, use the desktop app with local execution. Linux, WSL, and cloud rendering are not supported.
+**macOS, Windows, or Linux x86_64**, including compatible cloud-agent environments.
+Your agent needs file and command access.
+See the [installation guide](skills/tesseract-video/references/installation.md) for platform requirements.
 
 ### Install with one command
 
@@ -42,11 +44,13 @@ Then [ask it to make a video](#what-you-can-make). The skills guide your agent t
 Install the Tesseract skills from https://github.com/mirage-hq/Tesseract.
 Follow their installation guide to set up the matching CLI for my
 computer, verify its checksum, and confirm it runs.
+Then ask me for my footage or the video I want to make.
 ```
 
-### ChatGPT / Codex plugin
+### Plugins
 
-**Public plugin listing coming soon.** Use either setup option above for now.
+[ChatGPT/Codex plugin →](https://chatgpt.com/plugins/plugins_6ab148f4986c819198f6a08c7fb30f3e?open_in_app)
+Claude Code plugin coming soon
 
 ### Manual downloads
 
@@ -54,7 +58,7 @@ computer, verify its checksum, and confirm it runs.
 
 | Download | Choose this for |
 | --- | --- |
-| Plugin ZIP | Both skills, packaged for OpenAI, Cursor, and Claude Code |
+| CLI ZIP — `linux-x86_64` | Linux PCs and compatible cloud-agent environments |
 | CLI ZIP — `darwin-arm64` | Apple Silicon Mac |
 | CLI ZIP — `darwin-x86_64` | Intel Mac |
 | CLI ZIP — `windows-x86_64` | 64-bit Windows PC |
