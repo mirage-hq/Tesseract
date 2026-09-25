@@ -14,6 +14,7 @@
 <p align="center">
   <a href="#get-started">Get started</a> ·
   <a href="#what-you-can-make">What you can make</a> ·
+  <a href="#example-projects">Examples</a> ·
   <a href="#manual-downloads">Downloads</a> ·
   <a href="https://mirage.app">Mirage</a>
 </p>
@@ -93,6 +94,14 @@ Render a preview before exporting the finished video.
 ```
 
 Keep the editable `.tsrct` project for your next revision.
+
+## Example projects
+
+Finished projects to open, take apart, and remix — each one an editable `.tsrct` document with the video it renders to.
+
+**[Browse the examples →](https://github.com/mirage-hq/Tesseract-Projects)**
+
+Grouped by scope: a single feature shown on its own, a small finished piece, or a full production. Point your agent at any `.tsrct` and describe the change you want.
 
 ## Terms
 
