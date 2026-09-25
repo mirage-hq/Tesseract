@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Bouncing ball</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main>
+      <section aria-label="Preview">
+        <canvas
+          id="preview"
+          width="1920"
+          height="1080"
+          aria-label="Bouncing ball preview"
+        ></canvas>
+        <div class="transport">
+          <button id="play" aria-label="Play" title="Play" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path id="play-icon" d="m8 5 11 7-11 7z" />
+            </svg>
+          </button>
+          <input
+            id="time"
+            type="range"
+            min="0"
+            max="1799"
+            value="400"
+            step="1"
+            aria-label="Playhead"
+            disabled
+          />
+        </div>
+      </section>
+      <fieldset id="controls" disabled>
+        <div class="properties">
+          <div class="colors">
+            <label>
+              <span>Ball</span>
+              <input id="ball" type="color" value="#d6edb3" />
+            </label>
+            <label>
+              <span>Background</span>
+              <input id="background" type="color" value="#263731" />
+            </label>
+          </div>
+          <div class="speeds" role="group" aria-label="Playback speed">
+            <button
+              id="slow"
+              aria-pressed="false"
+              title="Slow · 1.8 seconds per bounce"
+            >
+              Slow
+            </button>
+            <button
+              id="normal"
+              aria-pressed="true"
+              title="Normal · 0.9 seconds per bounce"
+            >
+              Normal
+            </button>
+            <button
+              id="fast"
+              aria-pressed="false"
+              title="Fast · 0.6 seconds per bounce"
+            >
+              Fast
+            </button>
+          </div>
+        </div>
+        <div class="curve-wrap">
+          <svg
+            id="curve"
+            viewBox="0 0 320 280"
+            role="group"
+            aria-label="Bounce easing curve"
+          >
+            <path
+              class="grid"
+              d="M32 24H288M32 82H288M32 140H288M32 198H288M32 256H288M32 24V256M96 24V256M160 24V256M224 24V256M288 24V256"
+            />
+            <path id="curve-guide" class="diagonal" d="M32 256 288 24" />
+            <path id="tangents" />
+            <path id="curve-line" />
+            <path id="curve-playhead" aria-hidden="true" />
+            <circle id="curve-dot" r="5" aria-hidden="true" />
+            <circle id="curve-start" class="endpoint" cx="32" cy="256" r="3" />
+            <circle id="curve-end" class="endpoint" cx="288" cy="24" r="3" />
+            <circle
+              id="handle-0"
+              class="handle"
+              r="8"
+              aria-label="First curve handle"
+            />
+            <circle
+              id="handle-1"
+              class="handle"
+              r="8"
+              aria-label="Second curve handle"
+            />
+          </svg>
+          <div class="curve-footer">
+            <output id="curve-values" aria-label="Easing curve values"></output>
+            <button
+              id="reset-curve"
+              aria-label="Reset to gravity"
+              title="Reset to gravity"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 10a8 8 0 1 1 1 8M4 4v6h6" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </fieldset>
+      <p id="status" role="status">Loading…</p>
+    </main>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

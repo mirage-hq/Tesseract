@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Tesseract — Browser editor</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <strong id="filename">Open a .tsrct file</strong>
+      <span id="saved"></span>
+      <div class="actions">
+        <button id="choose" class="icon-button" aria-label="Open .tsrct">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" aria-hidden="true">
+            <path d="M3 7V5h6l2 2h10v12H3z" />
+          </svg>
+        </button>
+        <input
+          id="open"
+          type="file"
+          accept=".tsrct"
+          aria-label="Open Tesseract project"
+          hidden
+        />
+        <button
+          id="reload"
+          class="icon-button"
+          aria-label="Reload file"
+          disabled
+        >
+          <svg viewBox="0 0 24 24" stroke-linecap="round" aria-hidden="true">
+            <path
+              d="M20 7v5h-5M4 17v-5h5M5.5 7a7 7 0 0 1 12-2L20 8M4 16l2.5 3a7 7 0 0 0 12-2"
+            />
+          </svg>
+        </button>
+        <button
+          class="icon-button"
+          id="download"
+          aria-label="Download .tsrct"
+          disabled
+        >
+          <svg viewBox="0 0 24 24" stroke-linecap="round" aria-hidden="true">
+            <path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5" />
+          </svg>
+        </button>
+        <button
+          class="icon-button primary"
+          id="save"
+          aria-label="Save .tsrct"
+          disabled
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 3h13l4 4v14H3V3zM7 3v6h10V3M7 21v-8h10v8" />
+          </svg>
+        </button>
+      </div>
+    </header>
+    <main>
+      <section class="stage">
+        <div class="canvas-wrap" id="canvas-wrap">
+          <canvas
+            id="preview"
+            width="960"
+            height="540"
+            aria-label="Project preview"
+            hidden
+          ></canvas>
+          <svg
+            id="selection-overlay"
+            aria-label="Select a layer on the canvas"
+            hidden
+          ></svg>
+          <div id="welcome"><p>Open a .tsrct file to begin.</p></div>
+        </div>
+        <div class="transport">
+          <button
+            id="play"
+            class="icon-button"
+            aria-label="Play"
+            title="Play"
+            disabled
+          >
+            <svg viewBox="0 0 24 24" stroke-linecap="round" aria-hidden="true">
+              <path d="m8 5 11 7-11 7z" />
+            </svg>
+          </button>
+          <button id="mute" class="icon-button" aria-label="Mute" title="Mute" aria-pressed="false" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m11 5-6 5H2v4h3l6 5zM16 8q5 4 0 8" /></svg>
+          </button>
+          <output id="clock">0.00 / 0.00 s</output>
+        </div>
+      </section>
+      <aside class="inspector">
+        <div id="inspector"><p class="empty">Select a layer</p></div>
+      </aside>
+      <section class="timeline">
+        <div class="timeline-scroll">
+          <div class="timeline-ruler">
+            <span class="track-heading" aria-hidden="true"></span>
+            <div class="time-axis">
+              <div class="ruler" id="ruler">
+                <span>0s</span>
+                <span id="end">—</span>
+              </div>
+              <input
+                id="time"
+                type="range"
+                min="0"
+                max="1000"
+                step="1"
+                value="0"
+                aria-label="Timeline position"
+                disabled
+              />
+            </div>
+          </div>
+          <div id="layers">
+            <p class="empty">Open a project to see its timeline.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer><span id="status" role="status"></span></footer>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
