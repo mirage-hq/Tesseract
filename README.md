@@ -14,6 +14,7 @@
 <p align="center">
   <a href="#get-started">Get started</a> ·
   <a href="#what-you-can-make">What you can make</a> ·
+  <a href="#example-projects">Examples</a> ·
   <a href="#manual-downloads">Downloads</a> ·
   <a href="https://mirage.app">Mirage</a>
 </p>
@@ -24,7 +25,9 @@ Tesseract brings professional creative tools into your agent workflow. Work with
 
 ## Get started
 
-**macOS or Windows, running locally.** In ChatGPT/Codex, use the desktop app with local execution. Linux, WSL, and cloud rendering are not supported.
+**macOS, Windows, or Linux x86_64**, including compatible cloud-agent environments.
+Your agent needs file and command access.
+See the [installation guide](skills/tesseract-video/references/installation.md) for platform requirements.
 
 ### Install with one command
 
@@ -42,11 +45,13 @@ Then [ask it to make a video](#what-you-can-make). The skills guide your agent t
 Install the Tesseract skills from https://github.com/mirage-hq/Tesseract.
 Follow their installation guide to set up the matching CLI for my
 computer, verify its checksum, and confirm it runs.
+Then ask me for my footage or the video I want to make.
 ```
 
-### ChatGPT / Codex plugin
+### Plugins
 
-**Public plugin listing coming soon.** Use either setup option above for now.
+[ChatGPT/Codex plugin →](https://chatgpt.com/plugins/plugins_6ab148f4986c819198f6a08c7fb30f3e?open_in_app)
+Claude Code plugin coming soon
 
 ### Manual downloads
 
@@ -54,7 +59,7 @@ computer, verify its checksum, and confirm it runs.
 
 | Download | Choose this for |
 | --- | --- |
-| Plugin ZIP | Both skills, packaged for OpenAI, Cursor, and Claude Code |
+| CLI ZIP — `linux-x86_64` | Linux PCs and compatible cloud-agent environments |
 | CLI ZIP — `darwin-arm64` | Apple Silicon Mac |
 | CLI ZIP — `darwin-x86_64` | Intel Mac |
 | CLI ZIP — `windows-x86_64` | 64-bit Windows PC |
@@ -89,6 +94,14 @@ Render a preview before exporting the finished video.
 ```
 
 Keep the editable `.tsrct` project for your next revision.
+
+## Example projects
+
+Finished projects to open, take apart, and remix — each one an editable `.tsrct` document with the video it renders to.
+
+**[Browse the examples →](https://github.com/mirage-hq/Tesseract-Projects)**
+
+Grouped by scope: a single feature shown on its own, a small finished piece, or a full production. Point your agent at any `.tsrct` and describe the change you want.
 
 ## Terms
 
