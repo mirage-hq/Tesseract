@@ -1,0 +1,6 @@
+interface:
+  display_name: "Tesseract: Design"
+  short_description: "Create editable visual designs"
+  icon_small: "./assets/icon.svg"
+  icon_large: "./assets/icon.svg"
+  default_prompt: "Use $tesseract-design to create a visual design from my brief and deliver PNGs with editable sources."

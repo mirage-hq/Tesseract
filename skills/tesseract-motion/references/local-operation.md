@@ -83,9 +83,10 @@ Creation makes one empty composition (`main`) on a 1080×1920 canvas, lasting
 three seconds. Inspect its ID before adding content. Change canvas, duration,
 or composition name by checking out and committing the editable document JSON.
 The document `duration` is in seconds; layer ranges and action times are milliseconds.
-Native rendering currently supports 1080×1920, 1920×1080, 1080×1080, 1080×1350,
-810×1080, and 1350×1080 canvases. Leave `backgroundColor` absent or opaque black;
-use a bottom FX shape layer for another background.
+Native preview renders at the document's authored dimensions, including custom
+canvas sizes. Dimensions must be positive, at most 7680 pixels per side and
+33,177,600 pixels total, subject to device limits. Set `backgroundColor` for the
+canvas background or use a bottom FX shape layer.
 
 Import supplied footage with `project import-video` before adding its video
 layer through JSON checkout/commit. Read [local footage](fx-authoring.md#local-footage).
