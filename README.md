@@ -35,7 +35,7 @@ See the [installation guide](skills/tesseract-video/references/installation.md) 
 npx skills add mirage-hq/Tesseract
 ```
 
-Choose both Tesseract skills and your agent. Requires Node.js/npm for this installer; the Tesseract CLI itself does not require Node.
+Choose the Tesseract skills you need. Requires Node.js/npm for this installer; the Tesseract CLI itself does not require Node.
 
 Then [ask it to make a video](#what-you-can-make). The skills guide your agent through CLI setup when needed.
 
@@ -63,6 +63,7 @@ Claude Code plugin coming soon
 | CLI ZIP — `darwin-arm64` | Apple Silicon Mac |
 | CLI ZIP — `darwin-x86_64` | Intel Mac |
 | CLI ZIP — `windows-x86_64` | 64-bit Windows PC |
+| Web runtime ZIP — `web` | Build browser-based Tesseract editors and previews |
 | Matching `.sha256` | Verify your ZIP before installing |
 
 Use the CLI version required by your skills. Install either the plugin or the skills; you don't need both.
@@ -73,6 +74,8 @@ Use the CLI version required by your skills. Install either the plugin or the sk
 | --- | --- |
 | **Tesseract: Edit Video** | Cut footage, adjust framing, and combine dialogue and music. |
 | **Tesseract: Motion Graphics** | Animate titles, typography, diagrams, and overlays. |
+| **Tesseract: Editor** | Build a custom browser editor for previewing, editing, and saving Tesseract projects. |
+| **Tesseract: Design** | Create static visuals, including posters, social graphics, and UI mockups. |
 
 Attach your material, then copy a prompt:
 
@@ -84,6 +87,11 @@ Keep the opening quick, add a clean title, and finish on the logo.
 ```text
 Use Tesseract to animate a diagram of these three steps.
 Use our brand colors and keep the text editable.
+```
+
+```text
+Use Tesseract to design a promotional graphic to accompany this video.
+Match its typography and colors. Deliver the PNG and editable project.
 ```
 
 Preview, then direct a revision:
