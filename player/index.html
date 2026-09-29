@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#141514">
+  <meta name="description" content="Open and play Tesseract projects in your browser.">
+  <title>Tesseract — Viewer</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23141514'/%3E%3Cpath d='M8 9h16v4h-6v12h-4V13H8z' fill='white'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <input id="file" type="file" accept=".tsrct" hidden>
+  <main>
+    <section id="player" aria-label="Tesseract player">
+      <div id="stage">
+        <button id="welcome">Drop a .tsrct file<span>or click to open</span></button>
+        <canvas id="canvas" aria-label="Project preview" hidden></canvas>
+      </div>
+      <div id="controls">
+        <input id="seek" disabled type="range" min="0" max="1" step="1" value="0" aria-label="Playback position">
+        <div class="toolbar">
+          <button id="play" disabled class="icon" aria-label="Play" title="Play (Space)"><svg viewBox="0 0 24 24" aria-hidden="true"><path id="play-path" d="m9 5 11 7-11 7Z"/></svg></button>
+          <span id="clock">0:00 / 0:00</span>
+          <span id="filename"></span>
+          <button id="open" class="icon" aria-label="Open file" title="Open file"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h7l2 2h9v11H3ZM3 7V4h7l2 3"/></svg></button>
+          <button id="mute" disabled class="icon" aria-label="Mute" title="Mute (M)" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path id="mute-path" d="m11 5-6 5H2v4h3l6 5ZM16 8q5 4 0 8"/></svg></button>
+          <button id="fullscreen" class="icon" aria-label="Enter fullscreen" title="Fullscreen (F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button>
+        </div>
+      </div>
+      <p id="status" role="status" aria-live="polite"></p>
+    </section>
+  </main>
+</body>
+</html>

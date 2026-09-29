@@ -1,0 +1,43 @@
+name: Deploy player to GitHub Pages
+on:
+  push:
+    branches: [main]
+    paths: [player/**, .github/workflows/player-pages.yml]
+  workflow_dispatch:
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - name: Assemble the player with the published runtime
+        env:
+          VERSION: 0.3.0
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/runtime"
+          gh release download "v$VERSION" --repo mirage-hq/Tesseract \
+            --pattern "tesseract-$VERSION-web.zip*" --dir "$RUNNER_TEMP/runtime"
+          cd "$RUNNER_TEMP/runtime"
+          sha256sum --check "tesseract-$VERSION-web.zip.sha256"
+          unzip -q "tesseract-$VERSION-web.zip"
+          mkdir -p "$GITHUB_WORKSPACE/player/runtime/$VERSION"
+          cp -R "tesseract-$VERSION-web/runtime/." "$GITHUB_WORKSPACE/player/runtime/$VERSION/"
+          cp "tesseract-$VERSION-web/TERMS.md" "tesseract-$VERSION-web/THIRD_PARTY_NOTICES.md" "$GITHUB_WORKSPACE/player/"
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: player
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
