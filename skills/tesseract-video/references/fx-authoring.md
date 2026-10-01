@@ -7,8 +7,9 @@ The footage example edits document JSON; the other examples are action batches.
 ## Structure, placement, and resources
 
 - The document owns one composition starting at time zero. Its root `duration`
-  is seconds; layer `activeRange` and `sourceRange` values are milliseconds and
-  immediate-parent-local. Keep document and ancestor windows long enough.
+  is seconds. Layer windows use milliseconds: Video/Audio/Group use
+  `playback.inputRange` on the immediate parent clock; other kinds use
+  `activeRange`. Keep document and ancestor windows long enough.
 - Layer IDs are integers unique within a composition. Choose unused IDs after
   inspection; preserve IDs when editing. Names describe visible roles.
 - Sibling index zero is frontmost. Create actions append behind siblings when
@@ -17,8 +18,10 @@ The footage example edits document JSON; the other examples are action batches.
   Scale and opacity use percentages (100 is unchanged/opaque); RGBA uses 0–1.
   Read the project's canvas dimensions rather than treating source pixels as
   composition coordinates. Parent transforms also affect children.
-- `sourceRange` selects media time; `activeRange` places it in the composition.
-  Moving content and trimming its source are different operations.
+- `sourceRange` selects media time independently of `playback.inputRange`.
+  Video/Audio/Group require windowed `playback` with an authored `mapping` and
+  `inputOffsetMs`; do not also supply `activeRange`. Moving a visibility window
+  and changing its content clock are different operations.
 - Import local footage with `project import-video` before referencing its asset ID.
   An arbitrary path or asset ID in an action does not import its bytes.
   Import audio/images through [media import](media-import.md); package fonts as below.
@@ -49,7 +52,9 @@ to the returned metadata and the user's requested framing):
 ```json
 [
   {"type":"Video","id":1,"name":"Main footage",
-   "activeRange":{"start":0,"duration":3000},"sourceRange":{"start":0,"duration":3000},
+   "playback":{"type":"windowed","inputRange":{"start":0,"duration":3000},
+     "mapping":{"type":"linear","input":{"start":0,"duration":3000},"output":{"start":0,"duration":3000}},"inputOffsetMs":0},
+   "sourceRange":{"start":0,"duration":3000},
    "sourceIntrinsicDuration":3000,"volume":1.0,
    "transform":{"anchorPoint":[0,0],"position":[0,0],"scale":[100,100],"rotation":0,"opacity":100},
    "source":{"assetId":"footage-1","fit":"contain"}}
@@ -154,7 +159,8 @@ Keep spoken captions editable as FX text layers, with one short phrase per
 `activeRange`. Obtain the actual words and timings from a supplied transcript,
 reviewed audio, or an available transcription tool; the CLI does not transcribe.
 If none is available, ask for the spoken text rather than inventing dialogue.
-Map source timestamps through the footage's `sourceRange` and `activeRange`.
+Map source timestamps through the footage's authored `playback.mapping` and
+`inputOffsetMs`, respecting its visibility window and `sourceRange` selection.
 
 Import the selected legible font file first. On a 1080×1920 portrait canvas, a useful
 starting point is centered box text at `[90, 1550]`, box size `[900, 220]`,

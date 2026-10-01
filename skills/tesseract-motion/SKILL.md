@@ -5,6 +5,8 @@ description: Create editable motion graphics locally in Tesseract, including ful
 
 # Design motion with Tesseract
 
+For converting files to or from other editing tools, such as Premiere Pro or After Effects, read [conversion](references/conversion.md). When opening shared or older `.tsrct` files, updating tools, or investigating load/render differences, read [versions and compatibility](references/versions.md).
+
 The CLI may send basic usage telemetry for some commands. You can provide optional attribution via `TESSERACT_SKILL=tesseract-motion` and the [other attribution variables](references/telemetry.md). Respect the CLI's telemetry opt-out setting; never enable telemetry on the user's behalf.
 
 Create a moving composition with a clear visual idea. Establish what the motion communicates, its rhythm, the destination canvas, and whether this is a full scene or an overlay that must leave footage visible.

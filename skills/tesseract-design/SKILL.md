@@ -5,6 +5,8 @@ description: Create and revise static visual designs as editable Tesseract compo
 
 # Design with Tesseract
 
+For converting files to or from other editing tools, such as Premiere Pro or After Effects, read [conversion](references/conversion.md). When opening shared or older `.tsrct` files, updating tools, or investigating load/render differences, read [versions and compatibility](references/versions.md).
+
 Turn the user's brief into static visual designs rendered with `tsrct preview`. Deliver the PNGs as the primary result and keep their editable `.tsrct` sources for revisions. Match the format to the request: a poster, social graphic, slide, diagram, interface mockup, or another composition.
 
 The CLI may send basic usage telemetry for some commands. Read [telemetry](references/telemetry.md) for collected data and opt-out; never enable telemetry on the user's behalf.

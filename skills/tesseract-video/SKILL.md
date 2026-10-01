@@ -5,6 +5,8 @@ description: Edit existing footage into finished videos locally with Tesseract. 
 
 # Edit video with Tesseract
 
+For converting files to or from other editing tools, such as Premiere Pro or After Effects, read [conversion](references/conversion.md). When opening shared or older `.tsrct` files, updating tools, or investigating load/render differences, read [versions and compatibility](references/versions.md).
+
 The CLI may send basic usage telemetry for some commands. You can provide optional attribution via `TESSERACT_SKILL=tesseract-video` and the [other attribution variables](references/telemetry.md). Respect the CLI's telemetry opt-out setting; never enable telemetry on the user's behalf.
 
 Make a deliberate edit from the user's material. Tesseract is the local editing and rendering engine; the agent supplies editorial judgment. The output is both a playable video and its editable project.
@@ -52,6 +54,6 @@ Use [filmstrip review](references/filmstrip-review.md) to inspect and correct vi
 changes. For dialogue cuts and music timing, follow [waveform editing](references/waveform-editing.md).
 Finish with [review and delivery](references/review-and-delivery.md); report actual
 checks and any limitations. Use absolute local file links and show the video inline
-when supported. Premiere round-trip, cloud sync, and publishing are not implemented.
+when supported. Cloud sync and publishing are not implemented.
 
 If the host cannot execute local commands or access the local GPU/filesystem, explain that this package needs a local execution environment. Do not substitute a hosted service or silently switch rendering engines.
