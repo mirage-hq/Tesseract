@@ -3,12 +3,15 @@ on:
   push:
     branches: [main]
     paths: [player/**, .github/workflows/player-pages.yml]
+  release:
+    types: [published]
   workflow_dispatch:
 concurrency:
   group: github-pages
   cancel-in-progress: false
 jobs:
   deploy:
+    if: github.event_name != 'release' || !github.event.release.prerelease
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -22,10 +25,11 @@ jobs:
       - uses: actions/configure-pages@v5
       - name: Assemble the player with the published runtime
         env:
-          VERSION: 0.3.0
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          VERSION=$(gh release view --repo mirage-hq/Tesseract --json tagName --jq '.tagName | ltrimstr("v")')
+          sed -i "s/__VERSION__/$VERSION/g" player/app.js
           mkdir -p "$RUNNER_TEMP/runtime"
           gh release download "v$VERSION" --repo mirage-hq/Tesseract \
             --pattern "tesseract-$VERSION-web.zip*" --dir "$RUNNER_TEMP/runtime"

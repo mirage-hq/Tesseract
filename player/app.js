@@ -1,6 +1,6 @@
 const $ = (id) => document.getElementById(id);
 let engine, renderPromise;
-const runtimeReady = import('./runtime/0.3.0/web_api.js').then(async (runtime) => {
+const runtimeReady = import('./runtime/__VERSION__/web_api.js').then(async (runtime) => {
   await runtime.default();
   return runtime;
 });
