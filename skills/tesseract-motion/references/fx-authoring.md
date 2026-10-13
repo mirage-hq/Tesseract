@@ -4,6 +4,13 @@ Use `project inspect` for existing content and `project schema` for the installe
 CLI's action contract, or `project schema --document` for editable JSON.
 The footage example edits document JSON; the other examples are action batches.
 
+## Document color management
+
+Set `colorManagement` on the document root, not on a composition or layer.
+Omitting it uses `legacyDisplay`. For ACES setup, compositing presets, layer
+`renderDomain` overrides, and highlight finishing with `halation`, read
+[color grading](color-grading.md#aces-scene-referred-color-management).
+
 ## Structure, placement, and resources
 
 - The document owns one composition starting at time zero. Its root `duration`
@@ -15,13 +22,19 @@ The footage example edits document JSON; the other examples are action batches.
 - Sibling index zero is frontmost. Create actions append behind siblings when
   `insertIndex` is omitted; use `insertIndex: 0` for a foreground insertion.
 - `position` is in parent coordinates; `anchorPoint` is in layer-local coordinates.
-  Scale and opacity use percentages (100 is unchanged/opaque); RGBA uses 0–1.
+  Scale and opacity use percentages (100 is unchanged/opaque). Authored paint RGB is finite encoded extended-sRGB in 0–64; alpha remains 0–1. RGB 1 is SDR graphics white; RGB 2 is about 4.9538 times linear white in HDR. SDR ratio-fits headroom. Native Adobe exports clip RGB to 1 with diagnostics; see `native-authoring.md`.
   Read the project's canvas dimensions rather than treating source pixels as
   composition coordinates. Parent transforms also affect children.
 - `sourceRange` selects media time independently of `playback.inputRange`.
   Video/Audio/Group require windowed `playback` with an authored `mapping` and
   `inputOffsetMs`; do not also supply `activeRange`. Moving a visibility window
   and changing its content clock are different operations.
+- Keyframe `layerTime` on a windowed Video/Audio/Group is on its content clock
+  (the mapped `playback` output, so `inputOffsetMs` included), clamped to the
+  window, not "milliseconds since the layer appeared". With
+  `inputOffsetMs` 1700, the first visible frame is at `layerTime` 1700. To animate
+  from the moment a clip appears regardless of its source offset, wrap it in a
+  Group and animate the Group.
 - Import local footage with `project import-video` before referencing its asset ID.
   An arbitrary path or asset ID in an action does not import its bytes.
   Import audio/images through [media import](media-import.md); package fonts as below.
@@ -38,7 +51,8 @@ tsrct project import-video --project project.tsrct \
 
 Use a new ID containing letters, numbers, hyphens, or underscores. Existing IDs
 are rejected to avoid replacing another layer's media. The JSON response reports
-`assetId`, `durationMs`, `width`, and `height` (display orientation). MP4, MOV, and
+`assetId`, `durationMs`, `width`, `height` (display orientation), and `hdrTransfer`
+(`"hlg"`, `"pq"`, or `null` for SDR). MP4, MOV, and
 M4V containers are accepted; actual decoding uses the engine's supported codecs.
 No external metadata tool is required. Import adds the resource; the following
 editable document JSON places it on the timeline. Run `project checkout`, append
@@ -57,7 +71,8 @@ to the returned metadata and the user's requested framing):
    "sourceRange":{"start":0,"duration":3000},
    "sourceIntrinsicDuration":3000,"volume":1.0,
    "transform":{"anchorPoint":[0,0],"position":[0,0],"scale":[100,100],"rotation":0,"opacity":100},
-   "source":{"assetId":"footage-1","fit":"contain"}}
+   "source":{"assetId":"footage-1","fit":"cover",
+     "sourceRect":{"x":0,"y":0,"width":1920,"height":1080}}}
 ]
 ```
 
@@ -67,8 +82,38 @@ section with `sourceRange`. Preserve footage audio unless the user asks to mute
 or replace it. Set `volume: 1.0` on new Video layers to enable embedded audio
 at unity gain; an omitted/null volume leaves it disabled. Preserve existing
 gain and animators on revisions, and verify the exported audio.
+`source.sourceRect` is the layer's media **frame** in layer-local pixels, not a
+crop of the source. Without it the frame is the source's natural size at the
+layer origin, so a 2560×1440 or vertical clip does not fill a 1920×1080 canvas.
+Set it to the canvas rectangle (as above, using the project's real canvas size)
+and choose `fit`: `cover` fills and clips, `contain` letterboxes. Select time
+with `sourceRange` and the playback mapping, never with `sourceRect`.
+
+The visible source moment is `mapping.output + inputOffsetMs` and must lie
+inside `sourceRange`: to start a clip at source 5 s, set `inputOffsetMs: 5000`
+and `sourceRange.start: 5000` together. Keyframes on the Video use that same
+content clock (see below), so animate a wrapping Group for "time since the clip
+appeared".
+
 Inspect a preview to verify crop, orientation, and composition placement before
 adding overlays or exporting. If decoding fails, report the error and source format.
+
+## Shape and solid HDR colors
+
+Rectangle and solid-shape fill/stroke RGB can use finite values from 0 to 64;
+alpha stays from 0 to 1. Values above 1 use extended sRGB: HDR export continues
+the sRGB transfer function, so 1 is graphics white and 2 is about 4.95 times its
+linear brightness. In SDR export, RGB is divided by its largest channel when
+that channel exceeds 1, preserving channel ratios; alpha is unchanged. Existing
+colors at or below 1 are unchanged.
+
+This applies to Rect/Solid `fillColor` and `strokeColor`, and
+`ShapePaint.type="solid"` fill/stroke colors. Text, gradients, backgrounds and
+content-painting effect/style colors also accept extended RGB. **SDR-domain
+effect colors: 0..1** — Tint/TintTritone and similar engine color shaders retain
+their validation/clamps in HDR; Hue/Saturation Colorize remains scalar SDR
+controls. They cannot produce light above SDR white. Native Adobe export clips
+extended RGB channels to 1 and reports the lost HDR brightness.
 
 ## Rectangle overlay
 

@@ -12,6 +12,7 @@ that every requested combination renders correctly; inspect the actual result.
 | Motion graphics | Editable keyframe actions, procedural scripts, and coordinated groups | [motion](motion.md), [motion design](motion-design.md) |
 | Type | Local TTF/OTF/TTC import, editable text, paragraph layout and schema-supported text animators | [text](fx-authoring.md#text-with-an-available-font) |
 | Captions | Editable phrase text layers with actual words/timing from supplied or verified material | [bottom captions](fx-authoring.md#bottom-captions) |
+| Color grading | Primary, wheels, curves, Creative LUT (`.cube`), log Input Transform, hue/saturation/luminance selections, opt-in ACES color management (ACEScct grading, ACES 2.0 SDR/HDR output, built-in camera input transforms); measured from rendered frames | [color grading](color-grading.md) |
 | Custom effects | Bounded premultiplied-alpha WGSL with declared parameters and layer texture inputs | [custom shader contract](custom-shader.md) |
 | Audio | Embedded video sound; imported Audio layers, source timing, linear gain and envelopes | [audio and timing](audio-and-timing.md) |
 | Local sound tools | Procedural WAV accents, source/edit waveform PNGs, loudness measurements and mono listening copies | [sound design](sound-design.md), [waveform editing](waveform-editing.md) |
@@ -21,14 +22,16 @@ that every requested combination renders correctly; inspect the actual result.
 
 - A document owns one FX composition. Use groups for scenes and Video layers for
   cuts, not `baseVideoTrack`, `fxCompositions`, or caption/audio tracks.
-- Import commands package local MP4/MOV/M4V footage and TTF/OTF/TTC font files.
+- Import commands package local MP4/MOV/M4V footage, TTF/OTF/TTC font files, and
+  3D `.cube` LUTs (`project import-asset --kind lut`).
   Installed system fonts are not discovered
   automatically. Audio and images use [media import](media-import.md).
   Import helper-generated files before placing layers.
 - The CLI exports H.264 MP4 or ProRes 4444 MOV at 720p, 1080p, or 4K and
-  24, 30, or 60 fps (default: 1080p/30/MP4). MP4 bitrate scales automatically.
-  Inspect the encoded output before delivery. Audio-only export, range export,
-  and geometry inspection are not exposed.
+  any positive integer frame rate (default: 1080p/30/MP4). MP4 bitrate scales
+  automatically. Inspect the encoded output before delivery. Export a timeline segment with
+  `--start-ms` and/or `--duration-ms`. Audio-only export and geometry inspection
+  are not exposed.
 - Canvas choices are listed in [local operation](local-operation.md). A bottom
   shape provides a different background; the renderer requires an absent or
   opaque-black document background.
