@@ -21,6 +21,7 @@ to the changed beat and its neighbors before final review.
 
 - Opening: does the viewer see a meaningful subject/action, or just a generic title?
 - Footage: correct source moments, intentional framing, complete actions, no accidental freezes/black gaps, continuity across cuts. For talking heads, check [eyeline continuity](editorial-decisions.md#talking-head-eyeline-continuity) in the final crop: stable eye height/screen position across cuts, natural head movement, and deliberate rather than accidental framing changes.
+- Color, when grading footage: follow the [grading review](color-grading.md#workflow) for each delivered look. Check shot consistency without erasing intentional lighting differences, and compare source/output skin, clipping, shadow detail and noise. Judge the rendered result, not matching parameter values or whole-frame statistics.
 - Graphics: real hierarchy, sufficient reading time, consistent type/palette, intentional motion, clear value beyond repeating speech.
 - Overlays: no collisions with faces, hands, product details, captions, or safe-area boundaries throughout the interval.
 - Full scenes: spatial relationships and animation explain the idea; avoid a sequence of static slides with transition effects.

@@ -28,14 +28,16 @@ Use the imported asset ID in an Audio layer, with `captionsEnabled: false` for m
 
 ## Local mix
 
-New Video layers need `volume: 1.0` to enable embedded source audio at unity gain; omitted/null volume disables it. Preserve existing gains on revisions. FX `Audio` layers can place music, a supplied sound effect, or dialogue independently. They have no visual transform. A minimal source carries `assetId`; source and active ranges are explicit.
+New Video layers need `volume: 1.0` to enable embedded source audio at unity gain; omitted/null volume disables it. Preserve existing gains on revisions. FX `Audio` layers can place music, a supplied sound effect, or dialogue independently. They have no visual transform. A minimal source carries `assetId`; the source range and windowed `playback` are explicit (Audio has no `activeRange`).
 
 ```json
 {
   "id": 90,
   "name": "Supplied music bed",
   "type": "Audio",
-  "activeRange": {"start": 0, "duration": 8000},
+  "playback": {"type": "windowed", "inputRange": {"start": 0, "duration": 8000},
+    "mapping": {"type": "linear", "input": {"start": 0, "duration": 8000},
+      "output": {"start": 0, "duration": 8000}}, "inputOffsetMs": 1500},
   "sourceRange": {"start": 1500, "duration": 8000},
   "sourceIntrinsicDuration": 30000,
   "source": {"assetId": "local-music-id"},

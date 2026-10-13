@@ -73,7 +73,7 @@ control. Prefer the explicit control suffix — a `.suffix` on the parameter
 name declares the control outright, with no heuristics involved:
 
 ```text
-<base>.colorR/.colorG/.colorB  color picker — declare each channel 0..1
+<base>.colorR/.colorG/.colorB  color picker — declare each channel 0..64 for extended-sRGB paint (alpha remains 0..1)
                                (read as normalized RGB); optional
                                <base>.colorA adds alpha
 <base>.x + <base>.y [+ .z]     2- or 3-value row of paired inputs

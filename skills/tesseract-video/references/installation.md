@@ -6,10 +6,10 @@ command (`~/Library/Application Support/Tesseract/bin/tsrct` on macOS,
 `${XDG_DATA_HOME:-$HOME/.local/share}/Tesseract/bin/tsrct` on Linux), then `tsrct` on PATH,
 and run `--version`.
 
-Read the required CLI version from `cli-version.txt` beside the installed
-installation guide. If the pin is missing, report an incomplete release package
-and stop installation. Check the executable's reported version against the pin;
-do not substitute the latest release or an internal build.
+If `cli-version.txt` exists beside this guide, it pins the required CLI version.
+Check the executable's reported version against it. Without a pin, this is a local
+development package: use an existing working CLI, or ask which public CLI version
+to install. Do not substitute the latest release or an internal build.
 
 The CLI supports macOS, 64-bit Windows, and Linux x86_64 (glibc 2.35+). Pick the bundle before installing:
 
@@ -32,9 +32,9 @@ verify and install it as described below.
 
 ## Public CLI downloads
 
-Read the exact required version from `cli-version.txt` beside the installation guide.
-If the pin is missing, report an incomplete release package and stop installation.
-Do not substitute the latest release or an internal build.
+Use the exact version from `cli-version.txt` beside this guide, or the public CLI
+version specified by the user for an unpinned development package. Do not guess
+a latest version or substitute an internal build.
 
 Download these two files from
 `https://github.com/mirage-hq/tesseract/releases/download/v<VERSION>/`:
@@ -109,6 +109,12 @@ Use the CLI's full error to diagnose the environment before choosing a fix.
 `No suitable GPU adapter found` can indicate driver, device-access, or capability
 problems; it does not prove a driver is missing. A Vulkan loader alone is not a
 working renderer. Compatible Mesa lavapipe can provide CPU rendering without a GPU.
+
+In the ChatGPT desktop app, GPU discovery failures may come from the chat's
+execution permissions. Retry through the normal approval flow. If that fails,
+suggest checking the permissions menu below the composer and trying “Approve for
+me” or “Full access,” then rerun the command. If it still fails, provide the exact
+command for the user to try directly in Terminal.
 
 `No usable H.264 encoder` is a separate encoding failure. Installing an `ffmpeg`
 executable does not add encoders to the bundled libraries; select the external
