@@ -83,6 +83,19 @@ Creation makes one empty composition (`main`) on a 1080×1920 canvas, lasting
 three seconds. Inspect its ID before adding content. Change canvas, duration,
 or composition name by checking out and committing the editable document JSON.
 The document `duration` is in seconds; layer ranges and action times are milliseconds.
+For HDR inspection, use `tsrct preview --project P --time T --output out.png --hdr`.
+This is a 16-bit PQ BT.2020 RGBA PNG tagged with `cICP` `[9, 16, 0, 1]`.
+Read RGB samples as `E = sample / 65535`; decode to cd/m² using
+`10000 * (max(E^(1/m2) - c1, 0) / (c2 - c3 * E^(1/m2)))^(1/m1)` with
+`m1=2610/16384`, `m2=2523/32`, `c1=3424/4096`, `c2=2413/128`, `c3=2392/128`.
+Graphics white (linear 1.0) is the document's `hdrGraphicsWhiteNits`, or
+609 cd/m² by default (gain × 203 cd/m²). HDR video luminance is independent of this setting. Alpha is straight, linear coverage.
+Do not judge HDR luminance from an SDR viewer or an 8-bit decode. Without the
+flag, preview stays 8-bit SDR. `filmstrip --hdr` writes the same 16-bit PQ PNG,
+including labels at the document's graphics white. Cells are downsampled in
+premultiplied linear light before PQ encoding; this is not an 8-bit contact sheet.
+HDR filmstrips have a 200 MB float-canvas limit (16 bytes/pixel).
+
 Native preview renders at the document's authored dimensions, including custom
 canvas sizes. Dimensions must be positive, at most 7680 pixels per side and
 33,177,600 pixels total, subject to device limits. Set `backgroundColor` for the
@@ -173,16 +186,85 @@ layer/group's active window, preserves canvas placement, and omits audio. Inspec
 its alpha channel and composite over contrasting backgrounds before delivery.
 
 Export defaults to 1080p, 30 fps, and H.264 MP4. Select `--resolution 720p|1080p|4k`,
-`--fps 24|30|60`, and `--format mp4|prores`. Resolution preserves the project aspect
-ratio: landscape 4K is 3840×2160, portrait 4K is 2160×3840, and square 4K is
-2160×2160. Keep the authoring canvas unchanged. MP4 bitrate scales automatically
+any positive integer with `--fps`, and `--format mp4|prores`. Resolution preserves the
+project aspect ratio: landscape 4K is 3840×2160, portrait 4K is 2160×3840, and square
+4K is 2160×2160. Keep the authoring canvas unchanged. MP4 bitrate scales automatically
 with output size and frame rate (10 Mbps at 1080p30, up to 60 Mbps); ProRes uses
-its codec's quality settings. HDR and fractional/source-matched FPS are not exposed.
+its codec's quality settings. Fractional/source-matched FPS is not exposed.
 Inspect the encoded dimensions, frame rate, audio, and visuals before delivery.
+
+Export is SDR unless you add `--hdr [auto|pq|hlg]`. HDR encodes HEVC Main 10 MP4.
+Bare `--hdr` means `auto`: match the majority transfer of source videos, or HLG
+when none declare one. Use `--hdr pq` for graphics/image-only documents or any
+content above HLG's approximately 766 cd/m² peak. PQ can represent up to 10,000
+cd/m²; `--hdr hlg` explicitly selects the existing HLG convention (0.75 = 203
+cd/m², peak approximately 766). Selection changes encoding, not source luminance.
+`--hdr` cannot be combined with `--format prores` or `--fx-solo`. Preview and
+filmstrip also accept `--hdr` (always PQ PNG, not auto/HLG). Inspect HDR with a
+display or tool that reads its color metadata, not an 8-bit SDR image viewer.
+
+In an HDR export, white graphics (text, shapes, images; color 1.0) default to
+about 609 cd/m², three times the 203 cd/m² diffuse white of HDR video, so text
+reads clearly white on phones. Set the document's `hdrGraphicsWhiteNits`
+(100–1000) through checkout/commit to change it; 203 puts graphics on the
+video's diffuse white (broadcast convention). Above about 766, HLG clips
+highlights; choose PQ to preserve them. HDR images, like HDR video, retain their
+source luminance independently of this setting. SDR output is unaffected.
+
+### Choosing graphics white
+
+This setting matters only for HDR output. Keep the default unless the delivery
+specification or the intended appearance calls for a change; it is a product
+default, not a universal HDR mastering target.
+
+- Follow the recipient's delivery specification first. When it calls for
+  BT.2408 reference white, use 203 cd/m². This is the nominal Graphics White in
+  [ITU-R BT.2408, section 2.1](https://www.itu.int/dms_pub/itu-r/opb/rep/R-REP-BT.2408-8-2024-PDF-E.pdf),
+  not a requirement shared by every broadcaster or streaming platform.
+- If graphics look glaring or detached, especially large white areas over dark
+  video, try a lower value and review representative shots on an HDR-aware display.
+  Preserve the intended caption legibility rather than matching luminance blindly.
+- To measure, render `preview --hdr` and use the
+  [PQ decoding and luminance calculation](color-grading.md#hdr-output-and-stills).
+  Sample the opaque interior of white graphics, avoiding antialiased edges, and
+  compare it with a representative diffuse-white object in the video. Avoid
+  specular highlights and do not treat skin as a white reference. Lighting and
+  creative grading change scene whites, so there is no universal graphics-to-video
+  brightness ratio. Re-render and review after changing the value.
+
+For neutral authored RGB, absolute luminance is `linear(value) ×
+hdrGraphicsWhiteNits`, where `linear` is the sRGB EOTF continued above 1:
+`((value + 0.055) / 1.055)^2.4` for values above 0.04045.
+
+| Encoded RGB value | At graphics white 609 (cd/m²) | At graphics white 203 (cd/m²) |
+| --- | ---: | ---: |
+| 1.0 | 609 | 203 |
+| 1.1 | 757 | 252 |
+| 1.35 | 1211 | 404 |
+| 2.0 | 3017 | 1006 |
+
+These are intended neutral-paint luminances before output clipping, not a
+per-channel luminance formula for colored paint. HLG clips at approximately
+766 cd/m², so the default 609 leaves little real headroom. For extended-color
+headroom, agents should lower `hdrGraphicsWhiteNits` to around 203 and export
+with `--hdr pq`. SDR instead ratio-fits extended encoded RGB by its largest
+channel; values at or below 1 retain the existing SDR path.
 
 ```sh
 tsrct export --project project.tsrct --resolution 4k --fps 60 --output finished.mp4
+tsrct export --project project.tsrct --hdr pq --output finished-hdr.mp4
+tsrct filmstrip --project project.tsrct --timestamps-ms 0,1000 --hdr --output hdr-strip.png
 ```
+
+To export only a timeline segment, use milliseconds (for example, 2–5 seconds):
+
+```sh
+tsrct export --project project.tsrct --start-ms 2000 --duration-ms 3000 --output segment.mp4
+```
+
+Either flag may be omitted: start defaults to zero, and duration defaults to the
+remaining timeline. With `--fx-solo`, start is relative to the selected layer's
+active window; solo exports still omit audio. An out-of-bounds range fails.
 
 Follow [review and delivery](review-and-delivery.md#handoff) for final checks and
 presenting the result from this project root.
@@ -219,8 +301,8 @@ Use [waveform editing](waveform-editing.md) for source and rendered audio views,
 and [audio and timing](audio-and-timing.md) for sound helpers and gain envelopes.
 The helpers synthesize WAV accents on demand and inspect audio; they do not
 import media or mutate a project. Import their output with `project import-asset --kind audio`,
-then place editable Audio layers. Audio-only and arbitrary range export are not
-exposed by this CLI. Use the CLI to modify documents; do not edit the ZIP directly.
+then place editable Audio layers. Audio-only export is not exposed by this CLI.
+Use the CLI to modify documents; do not edit the ZIP directly.
 
 For a dialogue-only diagnostic, check out the working document and commit a
 separate `.tsrct` copy with music/SFX gains and any gain animators muted. Export
