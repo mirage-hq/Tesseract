@@ -23,7 +23,7 @@
 
 Tesseract brings professional creative tools into your agent workflow. Work with video layers, compositions, keyframes, and audio in one connected project. Preview the result, direct a revision, and render the finished video locally.
 
-## Get started
+# Get started
 
 **macOS, Windows, or Linux x86_64**, including compatible cloud-agent environments.
 Your agent needs file and command access.
@@ -40,14 +40,12 @@ Choose the Tesseract skills you need. Requires Node.js/npm for this installer; t
 Then [ask it to make a video](#what-you-can-make). The skills guide your agent through CLI setup when needed.
 
 ### Or let your agent install it
-
 ```text
 Install the Tesseract skills from https://github.com/mirage-hq/Tesseract.
 Follow their installation guide to set up the matching CLI for my
 computer, verify its checksum, and confirm it runs.
 Then ask me for my footage or the video I want to make.
 ```
-
 ### Plugins
 
 [ChatGPT/Codex plugin →](https://chatgpt.com/plugins/plugins_6ab148f4986c819198f6a08c7fb30f3e?open_in_app)
@@ -68,7 +66,7 @@ Claude Code plugin coming soon
 
 Use the CLI version required by your skills. Install either the plugin or the skills; you don't need both.
 
-## What you can make
+# What you can make
 
 | Skill | Use it for |
 | --- | --- |
@@ -103,7 +101,7 @@ Render a preview before exporting the finished video.
 
 Keep the editable `.tsrct` project for your next revision.
 
-## Example projects
+### Example projects
 
 Finished projects to open, take apart, and remix — each one an editable `.tsrct` document with the video it renders to.
 
@@ -111,7 +109,13 @@ Finished projects to open, take apart, and remix — each one an editable `.tsrc
 
 Grouped by scope: a single feature shown on its own, a small finished piece, or a full production. Point your agent at any `.tsrct` and describe the change you want.
 
-## Terms
+
+# Community
+Join the Tesseract community on Reddit: [r/TesseractByMirage](https://www.reddit.com/r/TesseractByMirage/)
+Share your projects, ask questions, and swap tips. For bugs, please use GitHub Issues.
+
+
+# Terms
 
 [Product terms](TERMS.md) · [Tesseract terms](https://mirage.app/legal/tesseract-terms) · [Privacy policy](https://mirage.app/legal/privacy-policy) · [Third-party notices](THIRD_PARTY_NOTICES.md)
 
