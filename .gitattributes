@@ -1,0 +1,6 @@
+# GitHub source ZIPs contain the installable plugin, without site/CI infrastructure.
+/.github export-ignore
+/.gitattributes export-ignore
+/docs export-ignore
+/player export-ignore
+/README.md export-ignore

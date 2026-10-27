@@ -2,16 +2,16 @@ name: Deploy player to GitHub Pages
 on:
   push:
     branches: [main]
-    paths: [player/**, .github/workflows/player-pages.yml]
-  release:
-    types: [published]
+    paths:
+      - player/**
+      - skills/tesseract-editor/references/cli-version.txt
+      - .github/workflows/player-pages.yml
   workflow_dispatch:
 concurrency:
   group: github-pages
   cancel-in-progress: false
 jobs:
   deploy:
-    if: github.event_name != 'release' || !github.event.release.prerelease
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -23,22 +23,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
-      - name: Assemble the player with the published runtime
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Download the pinned CDN runtime
         run: |
-          set -euo pipefail
-          VERSION=$(gh release view --repo mirage-hq/Tesseract --json tagName --jq '.tagName | ltrimstr("v")')
-          sed -i "s/__VERSION__/$VERSION/g" player/app.js
-          mkdir -p "$RUNNER_TEMP/runtime"
-          gh release download "v$VERSION" --repo mirage-hq/Tesseract \
-            --pattern "tesseract-$VERSION-web.zip*" --dir "$RUNNER_TEMP/runtime"
-          cd "$RUNNER_TEMP/runtime"
-          sha256sum --check "tesseract-$VERSION-web.zip.sha256"
-          unzip -q "tesseract-$VERSION-web.zip"
-          mkdir -p "$GITHUB_WORKSPACE/player/runtime/$VERSION"
-          cp -R "tesseract-$VERSION-web/runtime/." "$GITHUB_WORKSPACE/player/runtime/$VERSION/"
-          cp "tesseract-$VERSION-web/TERMS.md" "tesseract-$VERSION-web/THIRD_PARTY_NOTICES.md" "$GITHUB_WORKSPACE/player/"
+          version=$(cat skills/tesseract-editor/references/cli-version.txt)
+          [[ "$version" =~ ^0\.[0-9]+\.0$ ]]
+          mkdir -p player/runtime
+          for file in web_api.js web_api_bg.wasm TERMS.md THIRD_PARTY_NOTICES.md; do
+            curl --fail --location --retry 3 "https://captions-cdn.com/tesseract/$version/$file" --output "player/runtime/$file"
+          done
       - uses: actions/upload-pages-artifact@v4
         with:
           path: player

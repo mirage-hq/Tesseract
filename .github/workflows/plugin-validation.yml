@@ -1,0 +1,62 @@
+name: Validate Tesseract Plugin
+on:
+  pull_request:
+  push:
+    branches: [main, preview]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate the GitHub source archive
+        run: |
+          git archive --format=zip --prefix=tesseract/ HEAD > "$RUNNER_TEMP/tesseract.zip"
+          python3 - "$RUNNER_TEMP/tesseract.zip" <<'PY'
+          import json
+          from pathlib import PurePosixPath
+          import re
+          import stat
+          import sys
+          from zipfile import ZipFile
+
+          with ZipFile(sys.argv[1]) as archive:
+              names = archive.namelist()
+              assert all(not stat.S_ISLNK(entry.external_attr >> 16) for entry in archive.infolist())
+              roots = {PurePosixPath(name).parts[1] for name in names if len(PurePosixPath(name).parts) > 1}
+              assert roots <= {"skills", "assets", ".codex-plugin", ".claude-plugin", "plugin.json", "mcp.json",
+                               ".mcp.json", "TERMS.md", "LICENSE", "THIRD_PARTY_NOTICES.md"}, roots
+              manifests = [json.loads(archive.read("tesseract/" + name)) for name in
+                           ("plugin.json", ".codex-plugin/plugin.json", ".claude-plugin/plugin.json")]
+              assert all(m["name"] == "tesseract" and m["version"] == manifests[0]["version"] for m in manifests)
+              assert re.fullmatch(r"\d+\.\d+\.\d+", manifests[0]["version"])
+              assert manifests[0]["$schema"] == "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json"
+              mcp_files = roots & {"mcp.json", ".mcp.json"}
+              assert mcp_files in (set(), {"mcp.json", ".mcp.json"})
+              if mcp_files:
+                  for name, transport in (("mcp.json", "streamable-http"), (".mcp.json", "http")):
+                      config = json.loads(archive.read("tesseract/" + name))
+                      assert config["mcpServers"] == {"tesseract": {"type": transport, "url": "https://mcp.mirage.app/mcp"}}
+              skills = {PurePosixPath(name).parts[2] for name in names if name.startswith("tesseract/skills/") and name.endswith("/SKILL.md")}
+              assert skills == {"tesseract-design", "tesseract-editor", "tesseract-motion", "tesseract-video"}
+              pins = {archive.read(f"tesseract/skills/{skill}/references/cli-version.txt").decode().strip() for skill in skills}
+              assert len(pins) == 1 and re.fullmatch(r"\d+\.\d+\.\d+", next(iter(pins)))
+              for name in names:
+                  if name.startswith("tesseract/skills/") and name.endswith(".md"):
+                      document = archive.read(name).decode()
+                      for target in re.findall(r"\]\(([^)]+)\)", document):
+                          if "://" in target or target.startswith("#"):
+                              continue
+                          path = PurePosixPath(name).parent / target.split("#", 1)[0]
+                          parts = []
+                          for part in path.parts:
+                              if part == "..":
+                                  parts.pop()
+                              else:
+                                  parts.append(part)
+                          assert "/".join(parts) in names, (name, target)
+          print("Plugin archive, manifests, MCP configuration, CLI pins and skill resources passed")
+          PY
