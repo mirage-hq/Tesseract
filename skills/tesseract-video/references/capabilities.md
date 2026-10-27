@@ -39,8 +39,12 @@ that every requested combination renders correctly; inspect the actual result.
   only as allowed by the installed schema and required local resources. Verify
   person segmentation's model/resource availability and a real matte before
   planning around it. Do not approximate a person with a hand-drawn silhouette.
-- JS animation is not HTML/React rendering. 3D layer transforms are not mesh
-  import, rigging, simulation, or ray tracing.
+- JS animation is not HTML/React rendering.
+  3D layer transforms are not mesh import, rigging, simulation, or ray
+  tracing. Editable 3D scenes need a 3D-enabled Tesseract CLI and its 3D
+  skill; this package's CLI build lists no `createFxScene3DLayer` in
+  `project schema`. Report that limit rather than approximating a requested
+  3D scene with tilted 2D layers.
 - No generative video, avatar service, transcription, dedicated dereverberation
   model, cloud rendering, publishing, or editable Premiere/AE export is bundled.
 - Native gain envelopes are timed ducking, not signal-driven compression. Do not

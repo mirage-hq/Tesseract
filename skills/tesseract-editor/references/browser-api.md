@@ -1,6 +1,6 @@
 # Browser API
 
-Import from `./runtime/web_api.js` and initialize WASM once. All runtime files must come from the same release. The generated `.d.ts` describes the bindings; `actionSchema()` describes supported FX-document actions.
+Import from `./runtime/web_api.js` and initialize WASM once. All runtime files must come from the same release. For matching TypeScript declarations, follow the [runtime download guide](runtime.md). The JavaScript examples do not require them; `actionSchema()` describes supported FX-document actions.
 
 ```js
 import init, { TesseractEngine } from './runtime/web_api.js';

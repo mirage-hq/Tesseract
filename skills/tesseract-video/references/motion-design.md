@@ -37,7 +37,8 @@ Reserve motion for changes that guide attention. Give the viewer a stable interv
 | 3D-looking layer arrangement | Supported 3D transform properties and depth ordering | the document schema and [motion](motion.md) |
 | Custom pixel treatment | Bounded premultiplied-alpha WGSL custom shader | [custom shader contract](custom-shader.md) |
 
-This is not a Blender runtime. Distinguish transforming 2D layers in 3D from general meshes, physics, or a full 3D scene.
+This is not a Blender runtime.
+Distinguish transforming 2D layers in 3D from general meshes, physics, or a full 3D scene; those need a 3D-enabled Tesseract CLI and its 3D skill.
 
 ## Timing and motion character
 

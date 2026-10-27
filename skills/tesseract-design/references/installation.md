@@ -6,10 +6,9 @@ command (`~/Library/Application Support/Tesseract/bin/tsrct` on macOS,
 `${XDG_DATA_HOME:-$HOME/.local/share}/Tesseract/bin/tsrct` on Linux), then `tsrct` on PATH,
 and run `--version`.
 
-If `cli-version.txt` exists beside this guide, it pins the required CLI version.
-Check the executable's reported version against it. Without a pin, this is a local
-development package: use an existing working CLI, or ask which public CLI version
-to install. Do not substitute the latest release or an internal build.
+`cli-version.txt` beside this guide pins the required CLI version. Check the
+executable's reported version against it. Do not substitute the latest release
+or another build.
 
 The CLI supports macOS, 64-bit Windows, and Linux x86_64 (glibc 2.35+). Pick the bundle before installing:
 
@@ -32,9 +31,7 @@ verify and install it as described below.
 
 ## Public CLI downloads
 
-Use the exact version from `cli-version.txt` beside this guide, or the public CLI
-version specified by the user for an unpinned development package. Do not guess
-a latest version or substitute an internal build.
+Use the exact version from `cli-version.txt` beside this guide.
 
 Download these two files from
 `https://github.com/mirage-hq/tesseract/releases/download/v<VERSION>/`:
@@ -51,7 +48,8 @@ not required. Save both files in a fresh download directory.
 If network permissions block the download, use the agent's normal permission
 flow. If the release or platform asset is unavailable, report the exact URL and
 error and stop installation; do not request private repository access or guess
-another version. The release page is
+another version.
+The release page is
 `https://github.com/mirage-hq/tesseract/releases/tag/v<VERSION>`.
 
 Return to [installation](#cli-installation) to verify the checksum, extract,

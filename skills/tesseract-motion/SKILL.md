@@ -22,4 +22,5 @@ When designing an ad opening, read [ad hooks](references/ad-hooks.md): develop a
 
 Output an editable composition in a portable `.tsrct` document and a rendered preview. Composite overlays over the supplied footage as native layers. For a transparent overlay, use `export --format prores --fx-solo compositionId:layerId --output overlay.mov` and verify the alpha channel. Solo export covers the target’s active window without audio; full-project MOV export preserves the project mix.
 
-Prefer supported effects and native text/shape animation. For an unusual visual treatment use custom WGSL only after reading the [custom shader contract](references/custom-shader.md). Never invent API fields, keyframe formats, or a capability such as arbitrary 3D mesh import that this runtime does not provide.
+Prefer supported effects and native text/shape animation. For an unusual visual treatment use custom WGSL only after reading the [custom shader contract](references/custom-shader.md).
+Never invent API fields, keyframe formats, or a capability such as arbitrary 3D mesh import that this runtime does not provide.

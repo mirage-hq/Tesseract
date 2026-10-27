@@ -13,7 +13,7 @@ The [browser API reference](references/browser-api.md) covers initialization, ac
 
 ## Runtime and serving
 
-`references/cli-version.txt`, when present, pins the browser runtime release too. The [installation reference](references/installation.md) identifies the release repository. The browser assets are `tesseract-<VERSION>-web.zip` and its `.sha256`; verify the checksum before use. The archive contains `runtime/`, used beside `index.html` in the examples. Its generated JavaScript, types, and WASM must come from the same release. No npm installation is needed. `version()` returns the runtime release.
+Download the browser runtime from [the CDN](references/runtime.md) into a local `runtime/` directory beside `index.html`. Use both files from the specified version. No npm installation or native CLI is needed. `version()` returns the runtime release.
 
 The editor needs HTTP serving and browser GPU/media support. Its HTML depends on the runtime files; attachment viewers may not execute WASM. CLI or skill updates do not require upgrading an existing editor’s runtime.
 
