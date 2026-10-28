@@ -54,7 +54,10 @@ Use the same project root established in [project lifecycle](local-operation.md#
 Check that the current document, export, and previews correspond and packaged
 resources resolve. Review the supporting artifacts: make useful previews visible,
 keep retained authoring files within the working subfolder, and tidy disposable
-scraps. Do not turn handoff into a second workspace containing selected copies.
+scraps. Retire superseded full `.tsrct` copies, routine checks, and iteration
+exports as described in [storage](local-operation.md#storage); keep the JSON
+checkpoints of meaningful revisions with the project. Do not turn handoff into a
+second workspace containing selected copies.
 
 Show the playable video and link the editable document, useful previews, and
 project folder. Briefly describe the result or changes and any actual limitations.

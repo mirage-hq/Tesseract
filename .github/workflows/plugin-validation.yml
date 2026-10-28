@@ -30,10 +30,11 @@ jobs:
               assert roots <= {"skills", "assets", ".codex-plugin", ".claude-plugin", "plugin.json", "mcp.json",
                                ".mcp.json", "TERMS.md", "LICENSE", "THIRD_PARTY_NOTICES.md"}, roots
               manifests = [json.loads(archive.read("tesseract/" + name)) for name in
-                           ("plugin.json", ".codex-plugin/plugin.json", ".claude-plugin/plugin.json")]
+                           ("plugin.json", ".claude-plugin/plugin.json")]
               assert all(m["name"] == "tesseract" and m["version"] == manifests[0]["version"] for m in manifests)
               assert re.fullmatch(r"\d+\.\d+\.\d+", manifests[0]["version"])
               assert manifests[0]["$schema"] == "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json"
+              assert isinstance(manifests[0]["extensions"]["com.openai"]["interface"], dict)
               mcp_files = roots & {"mcp.json", ".mcp.json"}
               assert mcp_files in (set(), {"mcp.json", ".mcp.json"})
               if mcp_files:
