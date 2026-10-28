@@ -27,6 +27,13 @@ Edit the checked-out JSON, then save it with:
 tsrct project commit --project Design.tsrct --file .tesseract-work/layout.json
 ```
 
+Each copy of `Design.tsrct` repeats every packaged image and font, so save
+checkpoints as checked-out JSON (for example
+`tsrct project checkout --project Design.tsrct --output Versions/02-layout.json`) and
+restore one by committing it to the current document. Keep a full copy only for a
+version the user approved. Overwrite routine preview renders, and keep only those that
+record a decision or a comparison you will show.
+
 The document owns one composition. Set `dimensions.width` and `dimensions.height`
 to the requested design size, for example 1080×1080, 1440×1000, or 390×844; preview uses those
 authored dimensions. The renderer currently accepts positive dimensions up to

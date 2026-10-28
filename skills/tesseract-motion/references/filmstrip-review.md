@@ -30,13 +30,13 @@ Uniform sampling can miss a one-frame flash. It also cannot prove a complete abs
 A readable landscape overview:
 
 ```sh
-tsrct filmstrip --project /absolute/path/edit/project.tsrct --start-ms 0 --duration-ms 8000 --interval-ms 1000 --output /absolute/path/edit/Previews/Filmstrip-v2.png
+tsrct filmstrip --project /absolute/path/edit/project.tsrct --start-ms 0 --duration-ms 8000 --interval-ms 1000 --output /absolute/path/edit/Previews/Filmstrip.png
 ```
 
 A closer review around a cut:
 
 ```sh
-tsrct filmstrip --project /absolute/path/edit/project.tsrct --timestamps-ms 1700,1900,1967,2000,2033,2100,2300,2600 --output /absolute/path/edit/.tesseract-work/checks/cut-v2.png
+tsrct filmstrip --project /absolute/path/edit/project.tsrct --timestamps-ms 1700,1900,1967,2000,2033,2100,2300,2600 --output /absolute/path/edit/.tesseract-work/checks/cut.png
 ```
 
 Keep ranges inside the actual document duration. Range sampling is half-open;
@@ -44,10 +44,16 @@ explicit timestamps preserve input order. Do not sample exactly at the edit end
 and mistake an inactive end state for a bad final frame. About 8–16 samples are
 usually easier to inspect than a giant sheet.
 
+Strips at the default cell size stay small; full-size `preview` frames are much
+larger, so save them only where pixel detail matters. Overwrite routine strips on
+the next pass. For a before/after comparison, write the new strip to a second
+name and keep both until the comparison is noted (see
+[storage](local-operation.md#storage)).
+
 Cells default to 240×135 with five columns and ordinal/time labels. Use
 `--tile-width 135 --tile-height 240` for portrait; match the project aspect for
 square/4:5 work. Increase tile size or use `tsrct preview --time <seconds>`
-when details become too small. Choose fresh output filenames for comparisons.
+when details become too small.
 Stdout JSON reports `outputPath`, `frameCount`, dimensions, `resolvedSampling`,
 and `resolvedFraming`. Use resolved times and labels for cut-level diagnosis.
 
@@ -64,7 +70,7 @@ follow [local operation](local-operation.md); do not silently substitute a font.
 Use an actual composition/group ID from inspection:
 
 ```sh
-tsrct filmstrip --project /absolute/path/edit/project.tsrct --fx-solo main:3 --max-frames 8 --content-bounds --tile-width 320 --tile-height 180 --items-per-row 4 --output /absolute/path/edit/.tesseract-work/checks/graphic-v2.png
+tsrct filmstrip --project /absolute/path/edit/project.tsrct --fx-solo main:3 --max-frames 8 --content-bounds --tile-width 320 --tile-height 180 --items-per-row 4 --output /absolute/path/edit/.tesseract-work/checks/graphic.png
 ```
 
 This samples the selected layer/group's full active window. Omit

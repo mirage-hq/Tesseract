@@ -68,6 +68,35 @@ Associate exports and previews with their source revision; avoid saving every
 small tweak. Tidy disposable intermediates without deleting useful history.
 These are workspace conventions, not file-format requirements or mandatory files.
 
+### Storage
+
+A `.tsrct` carries every packaged image, font, clip, and model, so each full copy
+of the document stores all of them again. Review stills, exports, and JSON dumps
+accumulate the same way. Keep useful history without repeating it:
+
+- Checkpoint a revision as checked-out JSON, for example
+  `tsrct project checkout --project project.tsrct --output Versions/02-layout.json`.
+  To return to it, commit that file to the current document; the packaged media it
+  references must still be in the document. Keep a full `.tsrct` copy only for a
+  milestone the user approved or a state the JSON cannot restore.
+- `checkout` and `inspect --pretty` write indented copies of the whole document,
+  which can be large for a detailed scene. Reuse their names in `.tesseract-work/`
+  instead of keeping one per revision, and keep checkpoints only for meaningful
+  revisions.
+- Write routine checks to stable names in `.tesseract-work/checks/` and overwrite
+  them on the next pass. Name a still for its revision only when it records a
+  decision or a before/after comparison you will show. Once a round's findings are
+  in the notes, delete that round's checks.
+- Keep the current export and the exports the user reviewed. Delete superseded
+  iteration exports; their checkpoints can render them again.
+- Delete frame dumps, lossless or decoded intermediates, and analysis caches once
+  their results are recorded.
+- In long sessions, check the size of `.tesseract-work/` and `Versions/` with
+  `du -sh` and retire superseded material before it reaches a few gigabytes.
+
+Never delete the user's original media, the current document and export, or a
+milestone the user approved.
+
 ## Before editing
 
 Run `tsrct --version`, `tsrct project --help`, and `tsrct export --help`.
@@ -276,6 +305,8 @@ the saved source only through `project commit`; do not edit the ZIP manually.
 
 - Never edit `project.tsrct` as text.
 - Preserve the input with `--output .tesseract-work/revised.tsrct` when experimenting.
+  To keep the change, re-apply it to the project document or move the trial over
+  it; delete a discarded trial.
 - `project apply` is atomic: a rejected action batch does not publish partial
   project changes.
 - Preserve the `.tsrct` document and its packaged resources.

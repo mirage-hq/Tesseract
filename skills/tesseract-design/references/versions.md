@@ -8,7 +8,7 @@ are diagnostic evidence, not a requirement that every component have the same nu
 
 | Component | Evidence |
 | --- | --- |
-| Skill/plugin release | Installed plugin manifest version, when available, and the skill's `references/cli-version.txt` pin. Follow [installation](installation.md) for its matching CLI. |
+| Skill/plugin release | The plugin manifest identifies the instructions release. The separate `references/cli-version.txt` pin identifies the CLI to download using [installation](installation.md). These versions can differ. |
 | Native CLI and renderer | Resolved `tsrct --version` reports the CLI release and source revision; `tsrct --help` reports its FX schema revision in newer builds. Use that release's build information for the bundled Jerboa renderer. |
 | Browser runtime | The loaded module's `version()` and `engineVersion()` report its release and engine build. Check the actual deployed runtime; updating a skill or CLI does not update an existing editor. Keep its JavaScript, types, and WASM from the same release. |
 | Converter | Check the installed converter’s version and the [Tesseract Converter repository and releases](https://github.com/mirage-hq/Tesseract-Converter) for how to identify its build and associated schema or engine revisions. Its releases are independent of the plugin and rendering runtime. |
