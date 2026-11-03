@@ -7,9 +7,9 @@ Use the executable located through the installation reference. Commands below us
 ## Create and save
 
 For new work, create a fresh project root with `mkdir` without `-p` and verify
-success before writing into it. If it exists, choose another name. For revisions,
-use the project established by the conversation, preserve originals and stable
-IDs, and save a checkpoint before substantial changes.
+success before writing into it. If it exists, choose another name.
+For revisions, use the project established by the conversation, preserve originals
+and stable IDs, and save a checkpoint before substantial changes.
 
 Inside that root:
 
@@ -26,6 +26,14 @@ Edit the checked-out JSON, then save it with:
 ```sh
 tsrct project commit --project Design.tsrct --file .tesseract-work/layout.json
 ```
+
+Each copy of `Design.tsrct` repeats every packaged image and font, so save
+checkpoints as checked-out JSON (for example
+`tsrct project checkout --project Design.tsrct --output Versions/02-layout.json`) and
+restore one by committing it to the current document. Keep a full copy only for a
+version the user approved.
+Overwrite routine preview renders, and keep only those that
+record a decision or a comparison you will show.
 
 The document owns one composition. Set `dimensions.width` and `dimensions.height`
 to the requested design size, for example 1080×1080, 1440×1000, or 390×844; preview uses those
@@ -48,13 +56,15 @@ images, and supported effects are native FX layers.
 
 - Layer IDs are unique throughout the composition tree. `layers[0]` is frontmost.
 - Position is in parent pixels; anchor is layer-local. Scale and opacity use
-  percentages (`100` is identity); RGBA channels use `0..1`.
+  percentages (`100` is identity). Use RGB in `0..1` for SDR colors; alpha is `0..1`.
 - Set a document background color or place a full-canvas shape behind content.
 - Use supported grouping actions for related layers; preserve existing unknown
-  fields and re-checkout after action batches before making further JSON edits.
-- `project apply --project Design.tsrct --actions .tesseract-work/edits.json`
-  applies an array of supported composition-local actions atomically. Canvas and
-  media-layer structure edits use checkout/commit instead.
+  fields and re-read the document JSON after action batches before making further
+  JSON edits.
+- An action batch applies an array of supported composition-local actions
+  atomically. Canvas and media-layer structure edits go in the document JSON instead.
+  Apply one with `project apply --project Design.tsrct --actions .tesseract-work/edits.json`;
+  edit the JSON through checkout/commit.
 
 For example, an action batch to create a static card in the default composition
 (adapt IDs, geometry, and styling to the design):
@@ -69,7 +79,7 @@ For example, an action batch to create a static card in the default composition
 ```
 
 Choose fonts for the brand and actual text, then obtain the needed TTF/OTF/TTC
-files from supplied assets or an authorized source. Import before authoring text:
+files from supplied assets or an authorized source. Import before authoring text.
 
 ```sh
 tsrct project import-font --project Design.tsrct --file /absolute/path/Brand-Regular.ttf
@@ -81,16 +91,17 @@ before substituting. Keep source/license information with acquired fonts. Box te
 wraps but does not automatically shrink or clip overflow. Point text's origin is
 its baseline. Preview the actual copy to check metrics and line breaks.
 
-Import images before referring to them in layers:
+Import images before referring to them in layers.
 
 ```sh
 tsrct project import-asset --project Design.tsrct --file /absolute/path/logo.png --asset-id logo --kind image
 ```
 
 PNG, JPG/JPEG, and WebP are accepted; verify actual decoding in preview. Import
-packages bytes but does not create a layer. Re-checkout after import, add an
-`Image` layer using the installed document schema and imported asset ID, and
-commit. Do not use a filesystem path as an asset ID or edit the `.tsrct` ZIP by hand.
+does not create a layer: add an `Image` layer using the document schema and the
+imported asset ID. Do not use a filesystem path as an asset ID.
+Import packages bytes; re-checkout after import, add the layer, and commit. Do not
+edit the `.tsrct` ZIP by hand.
 
 ## Render and inspect the saved design
 
@@ -101,5 +112,6 @@ tsrct preview --project Design.tsrct --time 1 --output Design.png
 Open the PNG and inspect its dimensions and visible content. Correct the editable
 source and rerender, including after the last revision. Preview output is a
 standalone image; it does not require an MP4 export. If rendering fails, preserve
-the project, report the actual error, and resolve it through the installed CLI's
-supported workflow rather than switching renderers without the user's direction.
+the project and report the actual error; do not switch renderers without the
+user's direction.
+Resolve the failure through the installed CLI's supported workflow.

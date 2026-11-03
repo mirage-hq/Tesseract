@@ -3,7 +3,6 @@
 from array import array
 import json
 import math
-import os
 from pathlib import Path
 import statistics
 import sys
@@ -14,6 +13,14 @@ import tesseract_media as local
 RATE = 48000
 BIN_MS = 10
 MAX_WINDOW_MS = 600000
+# The plot needs these; text labels also need drawtext, which builds without
+# libfreetype (such as Homebrew's default ffmpeg) do not include.
+PLOT_FILTERS = ('showwavespic', 'format', 'pad', 'drawbox')
+NO_LABELS_NOTE = ('Text labels were omitted: this FFmpeg has no drawtext filter (it needs libfreetype). '
+                  'The waveform, markers and quiet bands are complete. Faint gridlines divide the window into sixths '
+                  'from window_start_ms to window_end_ms, channels are stacked from channel 1 at the top, and colors '
+                  'follow the waveform reference; read exact times from this JSON. For labeled images, use an FFmpeg '
+                  'with drawtext, such as Homebrew ffmpeg-full.')
 
 
 def db(value):
@@ -100,6 +107,24 @@ def candidates(points, mode, quiet_db, min_quiet_ms):
     return result
 
 
+def ffmpeg_filters(ffmpeg):
+    """Names of the filters compiled into this FFmpeg build."""
+    listing = local.run([ffmpeg, '-hide_banner', '-filters'], 30)
+    # Filter rows read `<flags> <name> <inputs>-><outputs> <description>`.
+    return {fields[1] for fields in map(str.split, listing.splitlines())
+            if len(fields) > 2 and '->' in fields[2]}
+
+
+def text_labels(ffmpeg):
+    """Whether this FFmpeg can label the plot; name any filter the plot itself lacks."""
+    available = ffmpeg_filters(ffmpeg)
+    missing = [name for name in PLOT_FILTERS if name not in available]
+    if missing:
+        raise ValueError(f"{ffmpeg} lacks the FFmpeg filter(s) {', '.join(missing)} needed to draw "
+                         'waveform views. Install a standard FFmpeg build.')
+    return 'drawtext' in available
+
+
 def draw_filter(report):
     width, height, left, top = 1320, 360, 60, 86
     start, end = report['window_start_ms'], report['window_end_ms']
@@ -108,6 +133,8 @@ def draw_filter(report):
     diagnostic_font = Path('/System/Library/Fonts/Supplemental/Arial.ttf')
     font_option = f"fontfile='{diagnostic_font}':" if diagnostic_font.is_file() else ''
     def label(text, px, py, size=18, color='0xe5e7eb'):
+        if not report['image_labels']:
+            return None
         # Only internally generated labels/numbers are passed into filter syntax.
         return f"drawtext={font_option}text='{text}':expansion=none:fontsize={size}:fontcolor={color}:x={px}:y={py}"
     filters = [f'showwavespic=s={width}x{height}:split_channels=1:colors=0x7dd3fc|0xc4b5fd|0x86efac|0xfda4af|0xfde68a|0x67e8f9|0xd8b4fe|0xfdba74:scale=sqrt:filter=peak',
@@ -137,11 +164,11 @@ def draw_filter(report):
         legend = 'Green = quiet candidates across ALL channels   White = review markers   Quiet does not mean safe to cut'
     filters.append(label(legend, 60, 492, 17))
     filters.append(label('Open and inspect this image. Listen before confirming a beat or edit. Zoom around speech cuts.', 60, 525, 16, '0x9ca3af'))
-    return ','.join(filters)
+    return ','.join(f for f in filters if f)
 
 
 def waveform(path, output, report_path=None, mode='music', start_ms=0, duration_ms=None,
-             quiet_db=-45, min_quiet_ms=200, markers_ms=(), clock='source', audio_stream=0):
+             quiet_db=-45, min_quiet_ms=200, markers_ms=(), clock='source', audio_stream=0, overwrite=False):
     if mode not in ('music', 'speech') or clock not in ('source', 'edit'):
         raise ValueError('Use music/speech mode and source/edit clock.')
     if start_ms < 0 or not math.isfinite(quiet_db) or not -90 <= quiet_db <= -15:
@@ -149,10 +176,10 @@ def waveform(path, output, report_path=None, mode='music', start_ms=0, duration_
     if min_quiet_ms < BIN_MS or min_quiet_ms > MAX_WINDOW_MS:
         raise ValueError('Quiet duration must be 10 to 600000 ms.')
     src = local.existing(path)
-    out = local.output_path(output)
+    out = local.output_path(output, overwrite, src)
     if out.suffix.lower() != '.png':
         raise ValueError('Use .png for the waveform view.')
-    dest = local.output_path(report_path or out.with_suffix('.json'))
+    dest = local.output_path(report_path or out.with_suffix('.json'), overwrite, src)
     if dest == out or dest.suffix.lower() != '.json':
         raise ValueError('Use a distinct .json report path.')
     meta = json.loads(local.run([local.external('ffprobe'), '-v', 'error', '-show_streams', '-show_format', '-of', 'json', src], 30))
@@ -177,13 +204,15 @@ def waveform(path, output, report_path=None, mode='music', start_ms=0, duration_
     markers = sorted(set(markers_ms))
     if len(markers) > 48 or any(not math.isfinite(t) or not start_ms <= t < start_ms+duration_ms for t in markers):
         raise ValueError('Use up to 48 review markers within the requested window.')
+    ffmpeg = local.external('ffmpeg')
+    labels = text_labels(ffmpeg)
     with tempfile.TemporaryDirectory(prefix='.tesseract-waveform-', dir=out.parent) as tmp:
         raw = Path(tmp)/'segment.f32'
         # Preserve timestamps relative to the container origin, including delayed audio.
         # Resampling fills timestamp gaps; no mono summing or level normalization occurs.
         af = (f'asetpts=PTS-({origin:.9f})/TB,aresample={RATE}:async=1:first_pts=0,'
               f'atrim=start_sample={start_ms*RATE//1000}:end_sample={(start_ms+duration_ms)*RATE//1000},asetpts=PTS-STARTPTS')
-        local.run([local.external('ffmpeg'), '-v', 'error', '-nostdin', '-n', '-copyts', '-i', src,
+        local.run([ffmpeg, '-v', 'error', '-nostdin', '-n', '-copyts', '-i', src,
                    '-map', f'0:a:{audio_stream}', '-vn', '-af', af, '-t', f'{duration_ms/1000:.6f}',
                    '-c:a', 'pcm_f32le', '-f', 'f32le', raw])
         points, frames = envelope(raw, channels, start_ms)
@@ -196,20 +225,21 @@ def waveform(path, output, report_path=None, mode='music', start_ms=0, duration_
                   'window_start_ms': start_ms, 'window_end_ms': end,
                   'requested_duration_ms': duration_ms, 'decoded_duration_ms': round(frames*1000/RATE, 3),
                   'quiet_threshold_dbfs': quiet_db, 'min_quiet_ms': min_quiet_ms,
-                  'review_markers_ms': markers, 'image': str(out), 'report': str(dest),
+                  'review_markers_ms': markers, 'image': str(out), 'image_labels': labels, 'report': str(dest),
                   'candidates': candidates(points, mode, quiet_db, min_quiet_ms), 'envelope': points,
                   'interpretation': 'All timestamps are milliseconds from the input media start on the labeled clock. Quiet intervals require every channel below the peak threshold. Accent and energy candidates are heuristics, not beat/downbeat, word-boundary, or section detection. Inspect the PNG, zoom and listen; never auto-delete candidates. No source or project was changed.'}
-        png, js = Path(tmp)/'waveform.png', Path(tmp)/'waveform.json'
-        local.run([local.external('ffmpeg'), '-v', 'error', '-nostdin', '-n', '-f', 'f32le', '-ar', str(RATE),
+        if not labels:
+            report['image_labels_note'] = NO_LABELS_NOTE
+        png = Path(tmp)/'waveform.png'
+        local.run([ffmpeg, '-v', 'error', '-nostdin', '-n', '-f', 'f32le', '-ar', str(RATE),
                    '-ac', str(channels), '-i', raw, '-filter_complex', draw_filter(report),
                    '-frames:v', '1', '-update', '1', png])
-        js.write_text(json.dumps(report, indent=2)+'\n')
-        # No incomplete-looking deliverable after processing failure; refuse races too.
-        os.link(png, out)
-        try:
-            os.link(js, dest)
-        except OSError:
-            out.unlink()
-            raise
+        # Stage the sidecar beside its own destination, which --report may put on another filesystem.
+        with tempfile.TemporaryDirectory(prefix='.tesseract-waveform-', dir=dest.parent) as staged:
+            js = Path(staged)/'waveform.json'
+            js.write_text(json.dumps(report, indent=2)+'\n')
+            # No incomplete-looking deliverable after processing failure; a failed refresh
+            # keeps the previous pair.
+            local.publish([(png, out), (js, dest)], overwrite)
     # Return small tool output; detailed envelope is in the JSON sidecar.
     return {k:v for k,v in report.items() if k != 'envelope'}

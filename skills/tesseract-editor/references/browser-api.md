@@ -1,6 +1,6 @@
 # Browser API
 
-Import from `./runtime/web_api.js` and initialize WASM once. All runtime files must come from the same release. The generated `.d.ts` describes the bindings; `actionSchema()` describes supported FX-document actions.
+Import from `./runtime/web_api.js` and initialize WASM once. All runtime files must come from the same release. For matching TypeScript declarations, follow the [runtime download guide](runtime.md). The JavaScript examples do not require them; `actionSchema()` describes supported FX-document actions.
 
 ```js
 import init, { TesseractEngine } from './runtime/web_api.js';
@@ -50,7 +50,9 @@ Only one group may be open. Finish pending edits and close the group before savi
 
 `layerBounds(timeMs)` returns `{ complete, layers }` with evaluated 2D geometry in project pixels, ordered bottom-to-top. Call it after rendering. Each layer has `layerId`, `points`, `parentTransform`, and `hitTestable`. `parentTransform` uses the six-value browser `DOMMatrix` order; invert it to map canvas drag deltas into layer coordinates. Hidden, inactive, audio, and 3D layers have no polygon. Draw selection overlays in the UI.
 
-Supported canvases are 1080×1920, 1920×1080, 1080×1080, 1080×1350, 810×1080, and 1350×1080. The document background must be absent or opaque black; use an FX shape layer for another background.
+The canvas uses the document's authored dimensions, including custom sizes,
+subject to renderer and device limits. Set the document's `backgroundColor` or
+use a bottom FX shape layer for the background.
 
 ## Files and assets
 

@@ -6,6 +6,11 @@ project formats, such as Adobe Premiere Pro and After Effects. Check the
 for current supported formats and conversion directions, installation, usage,
 releases, and known limitations. The converter is installed and versioned
 separately from the Tesseract plugin and `tsrct` rendering CLI.
+The converter also turns a Blender `.blend` into the model glb that Scene3D
+renders (`tsrct-conv model scene.blend --output scene.glb`). A 3D-enabled
+`tsrct` accepts the `.blend` directly in `project import-asset --kind model3d`,
+so use the converter only when you need the glb itself. The Tesseract: 3D
+Scenes skill places the imported model.
 
 Conversions may omit or approximate features, so the result can look or behave
 differently from the source. Use conversion diagnostics and the repository’s

@@ -5,6 +5,7 @@ description: Edit existing footage into finished videos locally with Tesseract. 
 
 # Edit video with Tesseract
 
+
 For converting files to or from other editing tools, such as Premiere Pro or After Effects, read [conversion](references/conversion.md). When opening shared or older `.tsrct` files, updating tools, or investigating load/render differences, read [versions and compatibility](references/versions.md).
 
 The CLI may send basic usage telemetry for some commands. You can provide optional attribution via `TESSERACT_SKILL=tesseract-video` and the [other attribution variables](references/telemetry.md). Respect the CLI's telemetry opt-out setting; never enable telemetry on the user's behalf.
@@ -13,10 +14,11 @@ Make a deliberate edit from the user's material. Tesseract is the local editing 
 
 ## Start with the material
 
-1. Resolve this skill's root from the directory containing this `SKILL.md`. Read [CLI installation](references/installation.md) and check the required Tesseract version once per session. Use the resolved executable path throughout the task. Scripts and references are relative to the installed skill, not a guessed home directory or development checkout.
-2. Read [local operation](references/local-operation.md). Probe the supplied media, sample frames at meaningful points, and listen to its audio using the host's available media tools. Metadata does not tell you what a shot depicts. If audio cannot be auditioned, disclose that limit rather than claiming a complete review.
-3. Establish the deliverable, audience, aspect ratio, duration, must-keep moments, and supplied brand assets from the request. Ask only for missing information that materially changes the edit. For a small correction, preserve the existing edit's style and scope.
-4. Read [editorial decisions](references/editorial-decisions.md) before planning a new edit. For each beat decide **footage**, **footage with graphics**, or **full graphics** and why. This is not a quota: do not add motion graphics just to demonstrate the engine.
+Resolve this skill's root from the directory containing this `SKILL.md`. Read [CLI installation](references/installation.md) and check the required Tesseract version once per session. Use the resolved executable path throughout the task. Scripts and references are relative to the installed skill, not a guessed home directory or development checkout.
+
+1. Read [local operation](references/local-operation.md). Probe the supplied media, sample frames at meaningful points, and listen to its audio using the host's available media tools. Metadata does not tell you what a shot depicts. If audio cannot be auditioned, disclose that limit rather than claiming a complete review.
+2. Establish the deliverable, audience, aspect ratio, duration, must-keep moments, and supplied brand assets from the request. Ask only for missing information that materially changes the edit. For a small correction, preserve the existing edit's style and scope.
+3. Read [editorial decisions](references/editorial-decisions.md) before planning a new edit. For each beat decide **footage**, **footage with graphics**, or **full graphics** and why. This is not a quota: do not add motion graphics just to demonstrate the engine.
 
 For a new ad or a revision to its opening, read [ad hooks](references/ad-hooks.md). Build a visual hook in the opening seconds from the actual footage, proposition, and evidence. Consider distinct concepts, select the strongest, and map its reveal/motion and purposeful SFX to confirmed opening music cues when music is provided. Render and inspect the hook plus its handoff into the ad before polishing the rest. Preserve the scope of unrelated revisions.
 
@@ -26,35 +28,57 @@ For a substantial new video, share a concise edit plan with the source moments, 
 
 ## Author the edit
 
-- New edit: `tsrct project create` creates a portable `.tsrct` document; import local footage before placing its layers. Existing `.tsrct`: inspect and check out a copy of its editable JSON. Preserve the original and stable IDs. Save JSON through `project commit`, or apply supported action batches with `project apply`, before rendering.
+- Import local footage before placing its layers. Preserve the original and stable IDs. Save edits to the document JSON, or apply supported action batches, before rendering.
+  New edit: `tsrct project create` creates a portable `.tsrct` document. Existing `.tsrct`: inspect and check out a copy of its editable JSON. Save JSON through `project commit`, or apply action batches with `project apply`.
 - Read [native authoring](references/native-authoring.md) before changing project structure. Source time, edit time, and layer time are different clocks. In particular, moving a clip must not silently change which source moment it plays.
-- Keep footage cuts, full scenes, and editable overlays as native layers in the document's single composition. Use groups for scenes. `activeRange` places a clip in its parent; `sourceRange` selects the source moment. Do not create base-video, caption, or audio tracks.
+- Keep footage cuts, full scenes, and editable overlays as native layers in the document's single composition. Use groups for scenes. In document JSON, Video/Audio/Group use windowed `playback` for placement; other layer kinds use `activeRange`. `sourceRange` selects the source interval. Do not create base-video, caption, or audio tracks.
 - For talking-head cuts, follow [eyeline continuity](references/editorial-decisions.md#talking-head-eyeline-continuity): align the speaker’s eye height and screen position across cuts with appropriate framing, including punch-ins. Check the rendered outgoing/incoming frames and playback while preserving natural head movement and intentional camera changes.
 - For motion work, read [motion design](references/motion-design.md), then only the relevant authoring reference. The examples demonstrate real schema; their visual style is not a required template.
-- For every new edit or sound pass, read [sound design](references/sound-design.md). Consider dialogue, music, micro-SFX, structural cues, and foley/ambience; use the roles the piece needs. Add appropriate sounds from supplied/local assets or the procedural helper without per-cue approval. Import the selected files with `project import-asset --kind audio`, then keep them as editable Audio layers. Use [audio and timing](references/audio-and-timing.md) for placement, ducking, local preparation, and measurement. Preserve useful source audio and chosen music. Do not produce invented speech or captions.
+- For every new edit or sound pass, read [sound design](references/sound-design.md). Consider dialogue, music, micro-SFX, structural cues, and foley/ambience; use the roles the piece needs. Add appropriate sounds from supplied/local assets or the procedural helper without per-cue approval. Import the selected files, then keep them as editable Audio layers.
+  Audio files import with `project import-asset --kind audio`.
+  Use [audio and timing](references/audio-and-timing.md) for placement, ducking, local preparation, and measurement. Preserve useful source audio and chosen music. Do not produce invented speech or captions.
 - When footage needs color correction, a look, log conversion, or shot matching, or the user asks about color, read [color grading](references/color-grading.md). Follow its [scene-aware workflow](references/color-grading.md#workflow), including [shot-local control](references/color-grading.md#baked-edits-and-shot-local-control) when needed for a baked edit. Shot consistency is expected without a separate request, but intentional lighting differences should remain. Follow its [source-relative neutral and skin checks](references/color-grading.md#source-relative-neutral-and-skin-checks): use median Lab regions from the original source and final output at matching timestamps, not your earlier graded preview. Keep corrections native and editable; [protect skin under looks](references/color-grading.md#keeping-skin-natural-under-a-look) and check secondary selections against an exaggerated preview (the CLI has no matte-preview switch). Use only one spatial `noiseReduction` instance and check edge retention; see [noise reduction](references/color-grading.md#noise-reduction). In a default document, HDR output does not make grades HDR-domain; for filmic highlights, light-like compositing, camera log without vendor LUTs, or one grade for SDR and HDR, use that reference's [ACES](references/color-grading.md#aces-scene-referred-color-management) section. See its Limitations before promising tracking or automatic matching.
+- When the work involves `--hdr`, an HDR delivery (including keeping `hdrTransfer` `hlg` or `pq` footage HDR), `hdrGraphicsWhiteNits`, RGB above 1 or HDR images, read [HDR](references/hdr.md).
 - When talking audio needs cleanup, read [speech cleanup](references/speech-cleanup.md). Diagnose room noise versus reverb/echo, use restrained EQ/dynamics or local noise reduction as appropriate, and compare at matched loudness. Preserve voice detail and timing; the plugin has no bundled dereverberation model.
-- Keep typography, graphics, footage, and audio native and editable. Import supplied images as assets with `project import-asset --kind image`, not as a flattened replacement for text, vector graphics, or entire scenes. Use existing footage; this plugin provides no generative-video or avatar service.
-- Respect the user's brand references. Mirage branding identifies this plugin, not every video created with it.
+- Keep typography, graphics, footage, and audio native and editable. Import supplied images as assets, not as a flattened replacement for text, vector graphics, or entire scenes.
+  Images import with `project import-asset --kind image`. Use existing footage; this plugin provides no generative-video or avatar service.
+- Respect the user's brand references.
+  Mirage branding identifies this plugin, not every video created with it.
 
 ## Look up capabilities only as needed
 
-Use the installed CLI's schemas through [local operation](references/local-operation.md).
+Look up the document and action schemas as [local operation](references/local-operation.md) describes.
 
 Read [capabilities](references/capabilities.md) for the feature map and limits,
 [FX authoring](references/fx-authoring.md) for native layers and footage, and
 [motion](references/motion.md) for supported keyframe and script actions. Search
 for the specific definition needed rather than dumping the whole schema. The
 action schema includes supported standalone operations and their field restrictions; use
-[local operation](references/local-operation.md) to choose actions versus JSON
-checkout/commit. The installed schema and actual render are authoritative.
+[local operation](references/local-operation.md) to choose actions versus editing
+the document JSON. The installed schema and actual render are authoritative.
 
 ## Review and handoff
 
 Use [filmstrip review](references/filmstrip-review.md) to inspect and correct visual
 changes. For dialogue cuts and music timing, follow [waveform editing](references/waveform-editing.md).
-Finish with [review and delivery](references/review-and-delivery.md); report actual
-checks and any limitations. Follow [final-export picture checks](references/color-grading.md#final-export-picture-checks): inspect several exported timestamps away from cuts/fades, compare with the source, and block delivery on unexplained black picture. Use absolute local file links and show the video inline
+Before delivery, export and run the checks in [review and delivery](references/review-and-delivery.md), including playback with audio. Inspect several exported timestamps away from cuts/fades and compare them with the source, checking footage as well as overlays; near a fade, confirm the actual frame timestamps before diagnosing missing footage. Block delivery on unexplained black picture; investigate it, never dismiss it as an HDR viewing artifact.
+
+Check the opening and ending, reading time, overlay placement, and source-frame
+continuity. For talking-head cuts, verify eyeline continuity at playback speed.
+For graded footage, follow the [grading review](references/color-grading.md#workflow).
+Probe the encoded output with local `ffprobe` to check streams, duration,
+resolution, and codec. Listen for clear speech, motivated cues, smooth gain
+changes, retained source sound, no doubled playback or clipped transients, and
+correct lip sync. An audio stream alone does not prove audible sound. Use the
+[audio delivery checks](references/audio-and-timing.md#measure-and-check-the-final-delivery)
+for encoded loudness, true peak, and mono listening; after speech cleanup, compare
+the same phrases at matched loudness and listen in the full mix.
+
+Then read and follow the [critic review](references/critic-review.md): two independent critics, an art director and a specialist for the video's channel and audience, such as a YouTube strategist for a YouTube video, score the export, and you revise between rounds until both rate it at least 8.5/10, for at most three review rounds. Tell the user the review plan, each round's scores and feedback, and the final score.
+
+Hand off as described in [review and delivery](references/review-and-delivery.md#handoff); report actual
+checks, the critics' final scores, and any limitations.
+Use absolute local file links and show the video inline
 when supported. Cloud sync and publishing are not implemented.
 
 If the host cannot execute local commands or access the local GPU/filesystem, explain that this package needs a local execution environment. Do not substitute a hosted service or silently switch rendering engines.

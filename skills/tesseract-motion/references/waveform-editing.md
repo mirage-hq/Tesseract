@@ -4,25 +4,25 @@ Use the waveform as an editing view, alongside listening and the filmstrip. When
 
 ## Generate an overview, then zoom
 
-The local sound helper accepts audio files or the audio inside a video. It writes a labeled PNG and a JSON sidecar containing 10 ms per-channel peak/RMS measurements and candidate markers. It does not alter the source, transcribe speech, or edit a project.
+The local [sound helper](../scripts/tesseract_sound.py) accepts audio files or the audio inside a video. It writes a labeled PNG and a JSON sidecar containing 10 ms per-channel peak/RMS measurements and candidate markers. It does not alter the source, transcribe speech, or edit a project.
 
 ```bash
 # Inspect the selected music before planning the visual beats.
-python3 "$SKILL/scripts/tesseract_sound.py" waveform /absolute/path/music.wav --mode music --output /absolute/path/edit/.tesseract-work/checks/music-overview.png
+python3 "$SKILL/scripts/tesseract_sound.py" waveform /absolute/path/music.wav --mode music --output "$WORK/checks/music-overview.png"
 
 # Inspect a range of talking footage; times remain relative to the SOURCE file.
-python3 "$SKILL/scripts/tesseract_sound.py" waveform /absolute/path/talking.mov --mode speech --start-ms 12000 --duration-ms 8000 --output /absolute/path/edit/.tesseract-work/checks/speech-source.png
+python3 "$SKILL/scripts/tesseract_sound.py" waveform /absolute/path/talking.mov --mode speech --start-ms 12000 --duration-ms 8000 --output "$WORK/checks/speech-source.png"
 
 # Zoom around proposed source cuts, keeping the original timestamps on the axis.
-python3 "$SKILL/scripts/tesseract_sound.py" waveform /absolute/path/talking.mov --mode speech --start-ms 14500 --duration-ms 1800 --markers-ms 15080,15720 --output /absolute/path/edit/.tesseract-work/checks/speech-cut-check.png
+python3 "$SKILL/scripts/tesseract_sound.py" waveform /absolute/path/talking.mov --mode speech --start-ms 14500 --duration-ms 1800 --markers-ms 15080,15720 --output "$WORK/checks/speech-cut-check.png"
 
 # Inspect the RENDERED edit around the new join, on the EDIT file's clock.
-python3 "$SKILL/scripts/tesseract_sound.py" waveform /absolute/path/edit/dialogue-v2.wav --mode speech --clock edit --start-ms 2000 --duration-ms 2000 --markers-ms 3100 --output /absolute/path/edit/.tesseract-work/checks/join-v2.png
+python3 "$SKILL/scripts/tesseract_sound.py" waveform /absolute/path/edit/dialogue-v2.wav --mode speech --clock edit --start-ms 2000 --duration-ms 2000 --markers-ms 3100 --output "$WORK/checks/join-v2.png"
 ```
 
-Choose ranges and markers from the actual material; the times above are syntax examples. Default is the whole input, up to ten minutes per view. Split longer material into labeled ranges; even shorter overviews need zooms for word boundaries. Use `--audio-stream N` to select a zero-based audio-stream ordinal after probing files with multiple audio tracks. Prefer an isolated dialogue track over a camera scratch mix with background music.
+Choose ranges and markers from the actual material; the times above are syntax examples. Default is the whole input, up to ten minutes per view. Split longer material into labeled ranges; even shorter overviews need zooms for word boundaries. Use `--audio-stream N` to select a zero-based audio-stream ordinal after probing files with multiple audio tracks. Prefer an isolated dialogue track over a camera scratch mix with background music. The helper never replaces an existing view or sidecar unless you pass `--overwrite`; use it to refresh a routine check in `$WORK/checks/`, and give a view you will compare against later its own name.
 
-The display separates channels, uses a square-root amplitude scale to expose quieter details, and does not normalize gain. Gold lines are transient/energy-rise candidates, pink lines are approximate energy changes, green bars are low-energy intervals, and white lines are the requested review markers. The plot caps each candidate category at 100 markers for legibility; all candidates remain in JSON. Threshold comparisons use the original decoded sample levels, not display height. Numeric timestamps in JSON are authoritative; use the image to see their context.
+The display separates channels, uses a square-root amplitude scale to expose quieter details, and does not normalize gain. Gold lines are transient/energy-rise candidates, pink lines are approximate energy changes, green bars are low-energy intervals, and white lines are the requested review markers. The plot caps each candidate category at 100 markers for legibility; stdout and the sidecar list every candidate. Their numeric timestamps are authoritative; use the image to see their context. Threshold comparisons use the original decoded sample levels, not display height. The sidecar's 10 ms envelope is for scripts (stdout omits it): query a time range with a short `python3` command rather than opening the file.
 
 A `--clock edit` label means the input is an exported edit or stem. It does **not** convert source time to project time. A short preview file begins at zero on its own clock; add its project-range offset explicitly. The helper preserves delayed audio relative to the container start and fills timestamp gaps for inspection. A requested window can end at audio EOF; check the reported actual window. No audio stream is a missing input, not a silent waveform.
 
@@ -44,7 +44,9 @@ For music played at normal speed, `edit_time = layer_edit_start + music_source_t
 4. Update video and its linked source audio together. Preserve source in/out points and edit positions. At video-frame boundaries, favor retaining a little more material over clipping a word. Use a deliberate J/L cut or room-tone bridge when it improves continuity, with source handles intact. Tiny fades may prevent clicks; fades and crossfades cannot restore missing phonemes and must not blur adjacent words.
 5. Render the changed dialogue and inspect its waveform around every changed join, marked on the edit clock. Listen to the previous word, the join, and the next word at normal speed, with music muted first; inspect video frames for jump cuts and lip sync. Then listen in the full mix. Check word completeness, breathing, pacing, clicks, doubled syllables, and any new silence. Correct and re-render the affected range before continuing.
 
-Use a temporary `.tsrct` copy with music/SFX gains and gain animators muted, export a dialogue-only MP4 with `tsrct export`, and pass that MP4 directly to the waveform helper. Preserve the working mix and original source; the CLI has no audio-only export command. For very short preview exports, retain the offset from preview time to full project time in the review notes.
+For a dialogue-only check, export a temporary copy of the document with music/SFX gains and gain animators muted, and pass the export directly to the waveform helper.
+`tsrct export-audio` exports only the copy's audio, without rendering video.
+Preserve the working mix and original source. For very short preview exports, retain the offset from preview time to full project time in the review notes.
 
 ## Record the actual checks
 
@@ -52,4 +54,6 @@ Record the revision, source file/stream, inspected ranges, confirmed music event
 or speech boundaries, source-to-edit mapping, and what changed after review.
 Waveforms support visual and auditory judgment; they do not establish intact words or a good mix on their own. If the host cannot audition audio, state that speech cuts and musical timing remain unverified instead of claiming they passed.
 
-All analysis is local with Python's standard library and local FFmpeg/ffprobe. PNG labeling uses FFmpeg's `drawtext` filter and a locally available diagnostic font; project typography still uses fonts packaged with `project import-font`. No new service, model, upload, or paid generation is involved.
+All analysis is local with Python's standard library and local FFmpeg/ffprobe. PNG labeling uses FFmpeg's `drawtext` filter and a locally available diagnostic font; project typography still uses the document's imported fonts. No new service, model, upload, or paid generation is involved.
+
+FFmpeg builds without libfreetype, such as Homebrew's default `ffmpeg`, have no `drawtext`. The helper then draws the same plot, gridlines, and colored markers without text, reports `"image_labels": false`, and explains in `image_labels_note` how to read the unlabeled image; read times from the JSON. For labeled images, use an FFmpeg build with `drawtext`, such as Homebrew's `ffmpeg-full`.

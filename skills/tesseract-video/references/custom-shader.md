@@ -62,7 +62,7 @@ Animate an ordinary effect parameter through the installed action schema's
 `setFxPropertyAnimator` effect-property target, using the owning layer ID,
 effect ID, and parameter name. Use `layerTimeJsCode` for a script; do not copy an
 internal `PropertyTarget` or `animator.code` object into an action. Read
-[motion](motion.md) and `tsrct project schema` for the exact wire shape.
+[motion](motion.md) and the installed action schema for the exact wire shape.
 A shader that only needs a clock can declare the reserved `animationTime`
 parameter instead, subject to support in the installed renderer.
 
@@ -333,8 +333,8 @@ the binding number.
 8. Animate knobs through `effectId + paramName`, not by rewriting WGSL per frame.
    When the shader needs a clock, declare the reserved `animationTime` parameter
    rather than an animator.
-9. Check `tsrct project schema --document`, save through `project commit` or
-   a supported action batch, then render with `tsrct preview` so the renderer
+9. Check the installed document schema, save through a direct document JSON
+   edit or a supported action batch, then render a `preview` so the renderer
    validates the WGSL and bindings. Inspect the actual effect; a pass-through
    fallback is not a successful shader.
 

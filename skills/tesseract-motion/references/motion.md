@@ -58,11 +58,11 @@ then add motion. Use easing for a deliberate arrival and linear interpolation
 for constant-rate movement. Check overshoot against the available space.
 
 Sample the entrance, settled hold, and exit, including just before and after a
-transition. For the example, use `--timestamps-ms 0,150,300,1400,2500,2700,2900`.
+transition. For the example, sample 0, 150, 300, 1400, 2500, 2700, and 2900 ms.
 These are project timestamps: offset them when the layer or its group starts
 later. The exact end of a half-open active window is already invisible.
 
-Review both the whole project and `--fx-solo main:3`. A content-bounds crop
+Review both the whole project and a solo strip of `main:3`. A content-bounds crop
 helps inspect details but cannot prove correct canvas placement. Filmstrips
 show sampled poses; inspect playback of the exported video for pacing, flicker,
 and audio that sparse stills can miss.

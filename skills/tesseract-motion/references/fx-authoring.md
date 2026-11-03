@@ -1,7 +1,8 @@
 # FX authoring
 
-Use `project inspect` for existing content and `project schema` for the installed
-CLI's action contract, or `project schema --document` for editable JSON.
+Inspect the document for existing content. Exact fields come from the installed
+action schema, or the document schema for editable JSON.
+Use `project inspect`, `project schema`, and `project schema --document`.
 The footage example edits document JSON; the other examples are action batches.
 
 ## Document color management
@@ -13,8 +14,9 @@ Omitting it uses `legacyDisplay`. For ACES setup, compositing presets, layer
 
 ## Structure, placement, and resources
 
-- The document owns one composition starting at time zero. Its root `duration`
-  is seconds. Layer windows use milliseconds: Video/Audio/Group use
+- The document owns one composition starting at time zero.
+  Its root `duration` is seconds.
+  Layer windows use milliseconds: Video/Audio/Group use
   `playback.inputRange` on the immediate parent clock; other kinds use
   `activeRange`. Keep document and ancestor windows long enough.
 - Layer IDs are integers unique within a composition. Choose unused IDs after
@@ -22,7 +24,7 @@ Omitting it uses `legacyDisplay`. For ACES setup, compositing presets, layer
 - Sibling index zero is frontmost. Create actions append behind siblings when
   `insertIndex` is omitted; use `insertIndex: 0` for a foreground insertion.
 - `position` is in parent coordinates; `anchorPoint` is in layer-local coordinates.
-  Scale and opacity use percentages (100 is unchanged/opaque). Authored paint RGB is finite encoded extended-sRGB in 0–64; alpha remains 0–1. RGB 1 is SDR graphics white; RGB 2 is about 4.9538 times linear white in HDR. SDR ratio-fits headroom. Native Adobe exports clip RGB to 1 with diagnostics; see `native-authoring.md`.
+  Scale and opacity use percentages (100 is unchanged/opaque). Authored paint RGB is finite encoded extended-sRGB in 0–64; alpha remains 0–1 (see [paint colors above 1](#paint-colors-above-1)). Native Adobe exports clip RGB to 1 with diagnostics; see `native-authoring.md`.
   Read the project's canvas dimensions rather than treating source pixels as
   composition coordinates. Parent transforms also affect children.
 - `sourceRange` selects media time independently of `playback.inputRange`.
@@ -35,14 +37,14 @@ Omitting it uses `legacyDisplay`. For ACES setup, compositing presets, layer
   `inputOffsetMs` 1700, the first visible frame is at `layerTime` 1700. To animate
   from the moment a clip appears regardless of its source offset, wrap it in a
   Group and animate the Group.
-- Import local footage with `project import-video` before referencing its asset ID.
+- Import local footage before referencing its asset ID.
   An arbitrary path or asset ID in an action does not import its bytes.
   Import audio/images through [media import](media-import.md); package fonts as below.
 
 ## Local footage
 
-Package supplied footage first; the command saves the video bytes inside the
-project without modifying the source file:
+Package supplied footage first; import saves the video bytes inside the
+project without modifying the source file.
 
 ```sh
 tsrct project import-video --project project.tsrct \
@@ -54,11 +56,14 @@ are rejected to avoid replacing another layer's media. The JSON response reports
 `assetId`, `durationMs`, `width`, `height` (display orientation), and `hdrTransfer`
 (`"hlg"`, `"pq"`, or `null` for SDR). MP4, MOV, and
 M4V containers are accepted; actual decoding uses the engine's supported codecs.
-No external metadata tool is required. Import adds the resource; the following
-editable document JSON places it on the timeline. Run `project checkout`, append
-the layer below to `composition.layers`, set document `duration` to `3` seconds,
-then run `project commit --project project.tsrct --file .tesseract-work/editable.json`. Preserve
-other layers; append footage behind overlays because index zero is frontmost.
+No external metadata tool is required.
+
+Import adds the resource; the following editable document JSON places it on the
+timeline. Append the layer below to the composition's layers and set the
+document duration to three seconds.
+Run `project checkout` first and
+`project commit --project project.tsrct --file .tesseract-work/editable.json` afterwards.
+Preserve other layers; append footage behind overlays because index zero is frontmost.
 
 For a three-second clip, for example (adapt duration, IDs, canvas, and transform
 to the returned metadata and the user's requested framing):
@@ -98,22 +103,18 @@ appeared".
 Inspect a preview to verify crop, orientation, and composition placement before
 adding overlays or exporting. If decoding fails, report the error and source format.
 
-## Shape and solid HDR colors
+## Paint colors above 1
 
-Rectangle and solid-shape fill/stroke RGB can use finite values from 0 to 64;
-alpha stays from 0 to 1. Values above 1 use extended sRGB: HDR export continues
-the sRGB transfer function, so 1 is graphics white and 2 is about 4.95 times its
-linear brightness. In SDR export, RGB is divided by its largest channel when
-that channel exceeds 1, preserving channel ratios; alpha is unchanged. Existing
-colors at or below 1 are unchanged.
-
-This applies to Rect/Solid `fillColor` and `strokeColor`, and
-`ShapePaint.type="solid"` fill/stroke colors. Text, gradients, backgrounds and
-content-painting effect/style colors also accept extended RGB. **SDR-domain
-effect colors: 0..1** — Tint/TintTritone and similar engine color shaders retain
-their validation/clamps in HDR; Hue/Saturation Colorize remains scalar SDR
-controls. They cannot produce light above SDR white. Native Adobe export clips
-extended RGB channels to 1 and reports the lost HDR brightness.
+Rect/Solid `fillColor` and `strokeColor` and `ShapePaint.type="solid"`
+fill/stroke RGB can use finite values from 0 to 64; alpha stays from 0 to 1.
+Text, gradients, backgrounds and content-painting effect/style colors also accept
+extended RGB. In SDR export, RGB is divided by its largest channel when that
+channel exceeds 1, preserving channel ratios (no extra brightness); alpha is
+unchanged. Existing colors at or below 1 are unchanged. HDR export renders values
+above 1 brighter than graphics white; see [HDR](hdr.md#authored-rgb-above-1).
+**SDR-domain effect colors: 0..1** — Tint/TintTritone and similar engine color
+shaders retain their validation/clamps in HDR; Hue/Saturation Colorize remains
+scalar SDR controls. They cannot produce light above SDR white.
 
 ## Rectangle overlay
 
@@ -162,18 +163,18 @@ source such as Google Fonts when downloads are allowed. Keep a recognizable
 filename and the source/license with the working files. If the requested font
 cannot be obtained, explain the gap before substituting it.
 
-Import the selected files into the document before authoring text:
+Import the selected files into the document before authoring text.
 
 ```sh
 tsrct project import-font --project project.tsrct --file /path/to/Inter-Bold.ttf
 ```
 
 Use the returned `fontFamily` and `fontStyle`, not names guessed from the filename.
-For a collection, choose the intended entry from `faces`. The filename is a
+For a collection, choose the intended face. The filename is a
 readable asset label; parsed metadata identifies the face, and the asset ID
 identifies the file's bytes. Import only the faces needed for the chosen design.
-Repeat import is a no-op. Preview and export use the packaged bytes after the
-document moves to another machine.
+Collection faces are listed under `faces`. Repeat import is a no-op. Preview
+and export use the packaged bytes after the document moves to another machine.
 
 Before building text-led animation, preview the actual words at their intended
 size and placement. Check character, hierarchy, line breaks, and glyph coverage;
@@ -197,12 +198,43 @@ Box text wraps but does not automatically shrink or clip overflow. Point text's
 local origin is its baseline start, not its visual center. Inspect a rendered
 frame for font metrics, line breaks, and overflow before animating the layout.
 
+## Text on a background
+
+For a label on a pill, tag, chip, badge, or button, let a Group draw the
+background around point text instead of sizing a separate rectangle by guess.
+A Group's fill, padding, and corner radii paint a rectangle that hugs its
+rendered children, so the background fits the words at any length or font and
+the text sits centered in it. Give each label its own Group. This adds one tag;
+`createFxGroupLayer` takes the Group's window as `activeRange` and stores it as
+its `playback`:
+
+```json
+[
+  {"type":"createFxGroupLayer","compositionId":"main","layerId":5,"name":"Tag","insertIndex":0,
+   "activeRange":{"start":0,"duration":3000},
+   "transform":{"anchorPoint":[0,0],"position":[0,0],"scale":[100,100],"rotation":0,"opacity":100}},
+  {"type":"createFxTextLayer","compositionId":"main","parentLayerId":5,"insertIndex":0,"layerId":6,"name":"Tag label",
+   "activeRange":{"start":0,"duration":3000},
+   "transform":{"anchorPoint":[0,0],"position":[150,1400],"scale":[100,100],"rotation":0,"opacity":100},
+   "sourceText":{"text":"Limited offer","fontFamily":"Inter","fontStyle":"Bold","fontSize":44,
+     "fillColor":[0.1,0.1,0.1,1],"justification":"left"}},
+  {"type":"updateGroupLayer","compositionId":"main","layerId":5,
+   "values":{"paddingTop":20,"paddingBottom":20,"paddingLeft":32,"paddingRight":32,
+     "cornerRadiusTopLeft":43,"cornerRadiusTopRight":43,"cornerRadiusBottomRight":43,"cornerRadiusBottomLeft":43,
+     "fillEnabled":true,"fillColor":[0.98,0.97,0.96,1]}}
+]
+```
+
+Place and animate the tag by its Group. The background follows the label when
+its text changes. Read the FX `layers` documentation (Group bounds, padding,
+and background) for gradient fills and nested Groups.
+
 
 ## Bottom captions
 
 Keep spoken captions editable as FX text layers, with one short phrase per
 `activeRange`. Obtain the actual words and timings from a supplied transcript,
-reviewed audio, or an available transcription tool; the CLI does not transcribe.
+reviewed audio, or an available transcription tool. The CLI does not transcribe.
 If none is available, ask for the spoken text rather than inventing dialogue.
 Map source timestamps through the footage's authored `playback.mapping` and
 `inputOffsetMs`, respecting its visibility window and `sourceRange` selection.

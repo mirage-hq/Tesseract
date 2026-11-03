@@ -26,6 +26,19 @@ directory as Distributable Code under the Visual Studio license terms; see
 `licenses/Microsoft-Visual-C++-Runtime.txt`. They are provided for use with the
 accompanying executable and libraries.
 
+The Windows bundle also includes the DirectX Shader Compiler's `dxcompiler.dll`,
+copied unmodified beside `tsrct.exe`, under the University of Illinois/NCSA Open
+Source License; it contains SPIRV-Tools (Apache-2.0) and SPIRV-Headers (MIT) code.
+See `licenses/DirectXShaderCompiler/` for these licenses and DXC's third-party
+notices. `provenance/dxc-build.json` records the DXC release.
+
+With Scene3D, the path tracer's denoiser runs the unmodified weights of Intel
+Open Image Denoise's `rt_hdr_alb_nrm` network, release 2.5.1. They are not in
+the bundle: Tesseract downloads them from the Captions CDN, as
+`models/oidn_rt_hdr_alb_nrm.oidn-2.5.1.tza`, when a render first uses the
+denoiser. The weights are licensed under the Apache License, Version 2.0; see
+`licenses/OIDN-weights.txt`. Their repository has no NOTICE file.
+
 `licenses/` also contains the available notices for each external Cargo package
 compiled for this build, including build tools. `provenance/cargo-dependencies.json`
 records license selections and versions; the corresponding package sources are
@@ -48,7 +61,7 @@ Keep a separate copy of a modified installation when upgrading or reinstalling.
 
 On Windows the installed executable resides under
 `%LOCALAPPDATA%\Tesseract\public-cli\<version>-x86_64\bin\` together with the FFmpeg
-DLLs and the Visual C++ runtime; Windows loads DLLs from that
+DLLs, the Visual C++ runtime and `dxcompiler.dll`; Windows loads DLLs from that
 directory first, so an interface-compatible replacement keeps the filenames. The
 launcher `%LOCALAPPDATA%\Tesseract\bin\tsrct.cmd` runs that executable. Nothing
 is code signed on Windows.

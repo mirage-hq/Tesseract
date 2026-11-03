@@ -49,7 +49,7 @@ ffmpeg -nostdin -n -i /absolute/path/edit/dialogue-aligned.wav -map 0:a:0 -vn -a
 
 Keep the original file and record the selected stream/channel, processing recipe, source range, and mapping to project time. Favor processing continuous dialogue takes before trimming into many short clips; independent per-clip processing can create changing noise floors and processor transients. If processing an excerpt, include handles and record its offset.
 
-Verify duration, head/tail, channel layout, processing latency, and lip sync before replacing audio in the project. A decoded WAV may start at zero even when its source video's audio starts later. Preserve that offset explicitly. Never time-stretch or trim the source to make a derivative appear aligned. Import the processed derivative with `project import-asset --kind audio` using a new asset ID. Then replace only the intended dialogue or mute its original playback when using an independent Audio layer, avoiding doubled speech. Keep music and SFX separate.
+Verify duration, head/tail, channel layout, processing latency, and lip sync before replacing audio in the project. A decoded WAV may start at zero even when its source video's audio starts later. Preserve that offset explicitly. Never time-stretch or trim the source to make a derivative appear aligned. Import the processed derivative as audio using a new asset ID. Then replace only the intended dialogue or mute its original playback when using an independent Audio layer, avoiding doubled speech. Keep music and SFX separate.
 
 ## Decide whether it is actually better
 

@@ -5,8 +5,8 @@ layer selection, property controls, and preview playback with audio.
 
 ## Run
 
-Place the Tesseract browser release’s `runtime/` directory beside `index.html`.
-Keep its JavaScript and WASM files together from the same release. Then run:
+Follow [runtime installation](../../references/runtime.md) to download the JavaScript
+and WASM into `runtime/` beside `index.html`. Then run:
 
 ```sh
 python3 -m http.server 8767 --bind 127.0.0.1

@@ -1,8 +1,10 @@
 # Capability map for Tesseract
 
 This skill uses the installed Tesseract CLI and its version-matched schemas.
-Instructions describe intent; exact fields come from `project schema` (actions)
-and `project schema --document` (editable JSON). A successful save is not proof
+Instructions describe intent; exact fields come from the installed action schema
+and document schema (editable JSON).
+Print them with `project schema` and `project schema --document`.
+A successful save is not proof
 that every requested combination renders correctly; inspect the actual result.
 
 | Area | Tesseract mechanism | Read |
@@ -16,36 +18,42 @@ that every requested combination renders correctly; inspect the actual result.
 | Custom effects | Bounded premultiplied-alpha WGSL with declared parameters and layer texture inputs | [custom shader contract](custom-shader.md) |
 | Audio | Embedded video sound; imported Audio layers, source timing, linear gain and envelopes | [audio and timing](audio-and-timing.md) |
 | Local sound tools | Procedural WAV accents, source/edit waveform PNGs, loudness measurements and mono listening copies | [sound design](sound-design.md), [waveform editing](waveform-editing.md) |
-| Inspection/output | PNG preview, labeled project/solo filmstrips, H.264/AAC MP4, ProRes 4444 MOV (transparent with silent solo), portable `.tsrct` document | [local operation](local-operation.md), [filmstrip review](filmstrip-review.md) |
+| Inspection/output | PNG preview, labeled project/solo filmstrips, H.264/AAC MP4, ProRes 4444 MOV (transparent with silent solo), HEVC HDR (PQ/HLG) MP4 and PQ PNGs | [local operation](local-operation.md), [filmstrip review](filmstrip-review.md), [HDR](hdr.md) |
+| 3D scenes | A Scene3D layer with cameras, lights, meshes, imported `.glb`/`.blend` models, materials and environment; keyframes and scripts on scene item properties; model rig, clip and cloth preparation inside `project apply` | [Scene3D basics](scene3d-basics.md), [recipes](scene3d-recipes.md), [Blender map](scene3d-blender.md), [Scene3D properties](scene3d-properties.md) |
 
 ## Current boundaries
 
 - A document owns one FX composition. Use groups for scenes and Video layers for
   cuts, not `baseVideoTrack`, `fxCompositions`, or caption/audio tracks.
-- Import commands package local MP4/MOV/M4V footage, TTF/OTF/TTC font files, and
-  3D `.cube` LUTs (`project import-asset --kind lut`).
+- Import packages local MP4/MOV/M4V footage, TTF/OTF/TTC font files, and
+  3D `.cube` LUTs.
+  A 3D-enabled CLI also packages models, IES photometry, cloth point caches
+  and HDR environment images; see [Scene3D basics](scene3d-basics.md).
   Installed system fonts are not discovered
   automatically. Audio and images use [media import](media-import.md).
   Import helper-generated files before placing layers.
-- The CLI exports H.264 MP4 or ProRes 4444 MOV at 720p, 1080p, or 4K and
-  any positive integer frame rate (default: 1080p/30/MP4). MP4 bitrate scales
-  automatically. Inspect the encoded output before delivery. Export a timeline segment with
-  `--start-ms` and/or `--duration-ms`. Audio-only export and geometry inspection
-  are not exposed.
+- Export writes H.264 MP4 or ProRes 4444 MOV at 720p, 1080p, or 4K and
+  any positive integer frame rate (default: 1080p/30/MP4), for the whole
+  timeline or a segment. MP4 bitrate scales automatically. Inspect the encoded
+  output before delivery.
+  Export a timeline segment with `--start-ms` and/or `--duration-ms`.
+  `export-audio` writes only the mix, as a WAV, without rendering video.
 - Canvas choices are listed in [local operation](local-operation.md). A bottom
-  shape provides a different background; the renderer requires an absent or
-  opaque-black document background.
+  shape or the document's `backgroundColor` sets the background.
 - Native masks/mattes, effects, and supported 3D layer transforms are available
   only as allowed by the installed schema and required local resources. Verify
   person segmentation's model/resource availability and a real matte before
   planning around it. Do not approximate a person with a hand-drawn silhouette.
-- JS animation is not HTML/React rendering. 3D layer transforms are not mesh
-  import, rigging, simulation, or ray tracing.
+- JS animation is not HTML/React rendering.
+  3D transform properties tilt ordinary 2D layers; meshes, imported models,
+  rigging and cloth are Scene3D items (see [Scene3D basics](scene3d-basics.md)).
+  For path-traced CLI previews and exports, follow [renderer selection](scene3d-basics.md#choose-the-renderer). Browser and iOS playback use raster.
 - No generative video, avatar service, transcription, dedicated dereverberation
   model, cloud rendering, publishing, or editable Premiere/AE export is bundled.
 - Native gain envelopes are timed ducking, not signal-driven compression. Do not
-  invent DSP fields. Local derivatives use available FFmpeg and `project import-asset --kind audio`; see [speech cleanup](speech-cleanup.md).
-- CLI setup follows [installation](installation.md). Optional audio helpers need
+  invent DSP fields. Local derivatives use available FFmpeg and are imported as audio; see [speech cleanup](speech-cleanup.md).
+- CLI setup follows [installation](installation.md).
+- Optional audio helpers need
   Python 3.9+ and local FFmpeg/ffprobe. Font import requires a local TTF/OTF/TTC file;
   subsequent rendering uses the document's packaged bytes.
 
@@ -53,6 +61,9 @@ that every requested combination renders correctly; inspect the actual result.
 
 Save the two schemas locally and search for the specific layer, property, effect,
 or action definition. Preserve existing fields and animation relationships.
+Use action batches where the action schema covers the edit, and direct document
+JSON edits for document-level edits and media placement.
 The action schema includes only supported standalone operations; use
-checkout/commit for document-level edits and media placement. Use the installed CLI’s schemas and available tools. If the requested feature is unavailable, explain the specific
+checkout/commit for the document JSON. Use the installed CLI’s schemas and available tools.
+If the requested feature is unavailable, explain the specific
 limit and continue supported work without switching engines silently.
