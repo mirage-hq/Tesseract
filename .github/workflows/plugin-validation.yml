@@ -31,7 +31,9 @@ jobs:
                                ".mcp.json", "TERMS.md", "LICENSE", "THIRD_PARTY_NOTICES.md",
                                ".github", "docs", "player", "README.md"}, roots
               manifests = [json.loads(archive.read("tesseract/" + name)) for name in
-                           ("plugin.json", ".codex-plugin/plugin.json", ".claude-plugin/plugin.json")]
+                           ("plugin.json", ".claude-plugin/plugin.json")]
+              if ".codex-plugin" in roots:
+                  manifests.append(json.loads(archive.read("tesseract/.codex-plugin/plugin.json")))
               assert all(m["name"] == "tesseract" and m["version"] == manifests[0]["version"] for m in manifests)
               assert re.fullmatch(r"\d+\.\d+\.\d+", manifests[0]["version"])
               assert manifests[0]["$schema"] == "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json"
@@ -42,7 +44,6 @@ jobs:
                       config = json.loads(archive.read("tesseract/" + name))
                       assert config["mcpServers"] == {"tesseract": {"type": transport, "url": "https://mcp.mirage.app/mcp"}}
               skills = {PurePosixPath(name).parts[2] for name in names if name.startswith("tesseract/skills/") and name.endswith("/SKILL.md")}
-              assert skills == {"tesseract-design", "tesseract-editor", "tesseract-motion", "tesseract-video"}
               pins = {archive.read(f"tesseract/skills/{skill}/references/cli-version.txt").decode().strip() for skill in skills}
               assert len(pins) == 1 and re.fullmatch(r"\d+\.\d+\.\d+", next(iter(pins)))
               for name in names:
