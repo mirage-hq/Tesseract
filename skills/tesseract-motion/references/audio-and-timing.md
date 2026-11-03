@@ -1,10 +1,22 @@
 # Audio and timing
 
+The optional [sound helper](../scripts/tesseract_sound.py) uses Python 3.9+ and local FFmpeg/ffprobe.
+It creates and inspects local files; it does not install a renderer or mutate a
+project. If a tool is missing, report the unavailable check and use the host's
+media tools where they can establish the same result.
+
 Read [waveform editing](waveform-editing.md) before timing an edit to music or trimming dialogue. Use its local `waveform` command for timestamped overview/zoom PNGs, inspect those views, and verify music events and word boundaries by listening. Recheck changed speech joins on the rendered edit clock before final mixing.
 
 ## Listen to the source before mixing
 
-Probe for audio streams, then audition the dialogue, important production sounds, and music. Preserve speech intelligibility and meaningful foley. A clip with an audio stream is not necessarily usable sound. Add appropriate local sound design as described in [sound design](sound-design.md); do not invent narration or replace deliberately chosen music.
+Import reports metadata, not what a shot depicts or what its audio means. Probe
+for streams with local FFmpeg tools:
+
+```sh
+ffprobe -v error -show_streams -show_format -of json /absolute/path/footage.mov
+```
+
+Then audition the dialogue, important production sounds, and music. Preserve speech intelligibility and meaningful foley. A clip with an audio stream is not necessarily usable sound. Add appropriate local sound design as described in [sound design](sound-design.md); do not invent narration or replace deliberately chosen music.
 
 When a transcript is supplied, align cuts to its actual source timestamps. If there is no local transcription tool and speech cannot be understood reliably, ask for the transcript or flag the limitation. Never invent spoken words or caption timing.
 
@@ -14,15 +26,15 @@ For uneven, noisy, boxy, or reverberant dialogue, read [speech cleanup](speech-c
 
 ```bash
 python3 "$SKILL/scripts/tesseract_sound.py" list
-python3 "$SKILL/scripts/tesseract_sound.py" make --preset air-whoosh --duration-ms 600 --seed 12 --output /absolute/path/edit/.tesseract-work/whoosh-v1.wav
+python3 "$SKILL/scripts/tesseract_sound.py" make --preset air-whoosh --duration-ms 600 --seed 12 --output "$WORK/whoosh-v1.wav"
 ```
 
 Generate a fresh WAV with `make`; no preset WAV files or rendering binaries are bundled. The helper contains soft-tap, dry-click, soft-pop, clear-ping, air-whoosh, short-riser, downlifter, and soft-impact. Each is a small procedural accent, not a music track or recorded foley. Listen in context before choosing it; the default file peak is −12 dBFS and does not establish its perceived mix level.
 
 The helper creates and inspects local files. Import a selected cue, music track,
-or cleaned dialogue derivative with `project import-asset --kind audio` before
+or cleaned dialogue derivative as audio before
 adding its editable Audio layer. See [media import](media-import.md) for commands.
-Import packages the bytes; placement and mixing are separate checkout/commit edits.
+Import packages the bytes; placement and mixing are separate document edits.
 
 Use the imported asset ID in an Audio layer, with `captionsEnabled: false` for music/effects. Keep the cue's source interval inside the actual file and its active interval inside the composition. A cue peaking 300 ms into the file should start 300 ms before the visual event it punctuates. Trim/fade a tail near the edit's end rather than unintentionally extending the project.
 
@@ -67,7 +79,7 @@ return lerp(0.30,0,(t-7.5)/0.5);
 A `volume` animator supplies the **final linear layer gain**, overriding the static `volume`; it is not automatically multiplied by that static value. Include the chosen bed level in every returned value.
 
 Use `setFxPropertyAnimator` for the script, or supported volume keyframe actions
-from the installed action schema. Apply them with `tsrct project apply`. For a
+from the installed action schema. Apply them as an action batch. For a
 bed at −14 dB that ducks by 6 dB, return the linear equivalent of −20 dB during
 speech. Set times from the actual dialogue, not the illustrative script above.
 If a root Audio layer starts at project time 5s, its local 950 ms duck occurs at
@@ -79,7 +91,7 @@ For another duration, change the envelope accordingly. The times are owner-layer
 
 This package supports native Audio layers, source/active timing, linear gain, and time-varying volume. Use envelopes for predictable ducking, fades, and planned dropouts. This is **timed ducking**, not an audio-reactive sidechain compressor.
 
-Do not invent native `compressor`, `sidechain`, `EQ`, `pan`, or `truePeakLimiter` fields. When the source needs EQ/compression, prepare a new **local audio derivative** with installed FFmpeg, keep the original source and processing recipe, and import it with `project import-asset --kind audio` and mix it through Tesseract. Do not flatten the editable project or quietly change the original media.
+Do not invent native `compressor`, `sidechain`, `EQ`, `pan`, or `truePeakLimiter` fields. When the source needs EQ/compression, prepare a new **local audio derivative** with installed FFmpeg, keep the original source and processing recipe, and import it as audio and mix it through Tesseract. Do not flatten the editable project or quietly change the original media.
 
 For example, a gentle music presence dip can be auditioned with:
 
@@ -103,12 +115,19 @@ Use `ffmpeg -h filter=<name>` to verify the locally installed filter/options bef
 
 Listen to the final muxed video, not just separate audio files. Check the head and tail, dialogue-to-music balance, abrupt gain edges, and source synchronization. Measure loudness/peaks locally with FFmpeg if needed; for example `ffmpeg -i edit.mp4 -af ebur128=peak=true -f null -`. Treat readings as measurements, not proof that speech is intelligible. Keep reasonable peak headroom and follow an explicit delivery spec when one is provided.
 
+For a dialogue-only diagnostic, check out the working document and commit a
+separate `.tsrct` copy with music/SFX gains and any gain animators muted. Export
+that copy's audio with `export-audio` and inspect it with the waveform helper.
+Preserve the working mix and source files; do not claim unperformed listening checks.
+
 ## Measure and check the final delivery
 
 ```bash
-python3 "$SKILL/scripts/tesseract_sound.py" measure /absolute/path/edit-v1.mp4 --report /absolute/path/edit/.tesseract-work/checks/loudness-v1.json
-python3 "$SKILL/scripts/tesseract_sound.py" mobile-preview /absolute/path/edit-v1.mp4 --output /absolute/path/edit/.tesseract-work/checks/mobile-v1.wav
+python3 "$SKILL/scripts/tesseract_sound.py" measure /absolute/path/edit-v1.mp4 --report "$WORK/checks/loudness.json" --overwrite
+python3 "$SKILL/scripts/tesseract_sound.py" mobile-preview /absolute/path/edit-v1.mp4 --output "$WORK/checks/mobile.wav" --overwrite
 ```
+
+The helpers never replace an existing file unless you pass `--overwrite`, which works only inside `WORK`; use it for routine checks such as these, which each pass refreshes.
 
 `measure` reports the first audio stream's integrated LUFS, true peak in dBTP, and loudness range; it does not normalize or modify the input. The working range is −16 to −14 LUFS and true peak at most −1 dBTP, subject to the actual delivery spec. Short isolated effects or silence may not have meaningful integrated measurements. If the deliverable has several audio programs, measure the intended stream explicitly with FFmpeg.
 

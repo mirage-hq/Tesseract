@@ -4,7 +4,6 @@ import argparse
 from array import array
 import json
 import math
-from pathlib import Path
 import random
 import re
 import subprocess
@@ -66,20 +65,22 @@ def synthesize(name, duration_ms, peak_db=-12.0, seed=0):
     return array("h", (round(x * scale * 32767) for x in samples))
 
 
-def save_cue(name, path, duration_ms=None, peak_db=-12.0, seed=0):
+def save_cue(name, path, duration_ms=None, peak_db=-12.0, seed=0, overwrite=False):
     duration_ms = PRESETS[name][0] if duration_ms is None else duration_ms
     samples = synthesize(name, duration_ms, peak_db, seed)
-    output = local.output_path(path)
+    output = local.output_path(path, overwrite)
     if output.suffix.lower() != ".wav":
         raise ValueError("Local procedural cues are PCM WAV files; use .wav.")
     if sys.byteorder != "little":
         samples.byteswap()
-    with output.open("xb") as f:
-        with wave.open(f, "wb") as w:
-            w.setnchannels(1)
-            w.setsampwidth(2)
-            w.setframerate(RATE)
-            w.writeframes(samples.tobytes())
+    def write(temporary):
+        with temporary.open("xb") as f:
+            with wave.open(f, "wb") as w:
+                w.setnchannels(1)
+                w.setsampwidth(2)
+                w.setframerate(RATE)
+                w.writeframes(samples.tobytes())
+    local.staged_write(output, write, overwrite)
     return {"path": str(output), "preset": name, "duration_ms": duration_ms,
             "sample_peak_dbfs": peak_db, "seed": seed,
             "origin": "Locally synthesized from oscillators and seeded noise; no recorded samples."}
@@ -111,15 +112,18 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("list")
+    replace = "Replace an existing output, such as a routine check from an earlier pass"
     p = sub.add_parser("make")
     p.add_argument("--preset", choices=PRESETS, required=True)
     p.add_argument("--output", required=True)
     p.add_argument("--duration-ms", type=int)
     p.add_argument("--peak-db", type=float, default=-12)
     p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--overwrite", action=argparse.BooleanOptionalAction, default=False, help=replace)
     p = sub.add_parser("measure")
     p.add_argument("input")
     p.add_argument("--report")
+    p.add_argument("--overwrite", action=argparse.BooleanOptionalAction, default=False, help=replace)
     p = sub.add_parser("waveform", help="Labeled waveform PNG + JSON candidates for music or speech review")
     p.add_argument("input")
     p.add_argument("--output", required=True)
@@ -132,31 +136,37 @@ def main():
     p.add_argument("--markers-ms", help="Comma-separated times on the input file clock; mark proposed cuts or accents")
     p.add_argument("--clock", choices=("source", "edit"), default="source")
     p.add_argument("--audio-stream", type=int, default=0, help="Zero-based audio stream ordinal")
+    p.add_argument("--overwrite", action=argparse.BooleanOptionalAction, default=False, help=replace)
     p = sub.add_parser("mobile-preview")
     p.add_argument("input")
     p.add_argument("--output", required=True)
+    p.add_argument("--overwrite", action=argparse.BooleanOptionalAction, default=False, help=replace)
     args = parser.parse_args()
     if args.command == "list":
         local.emit([{"preset": k, "duration_ms": v[0], "role": v[1], "use": v[2]} for k,v in PRESETS.items()])
     elif args.command == "make":
-        local.emit(save_cue(args.preset, args.output, args.duration_ms, args.peak_db, args.seed))
+        local.emit(save_cue(args.preset, args.output, args.duration_ms, args.peak_db, args.seed, args.overwrite))
     elif args.command == "measure":
-        report = measure(args.input)
+        src = local.existing(args.input)
+        # Check the report path before the measurement pass, which can take minutes.
+        if args.report and local.output_path(args.report, args.overwrite, src).suffix.lower() != ".json":
+            raise ValueError("Use .json for the loudness report.")
+        report = measure(src)
         if args.report:
-            local.write_json(args.report, report)
+            local.write_json(args.report, report, args.overwrite, src)
         local.emit(report)
     elif args.command == "waveform":
         markers = [float(x) for x in args.markers_ms.split(",")] if args.markers_ms else []
         local.emit(tesseract_waveform.waveform(args.input, args.output, args.report, args.mode,
             args.start_ms, args.duration_ms, args.quiet_db, args.min_quiet_ms, markers,
-            args.clock, args.audio_stream))
+            args.clock, args.audio_stream, args.overwrite))
     else:
         src = local.existing(args.input)
-        if Path(args.output).suffix.lower() != ".wav":
+        if local.output_path(args.output, args.overwrite, src).suffix.lower() != ".wav":
             raise ValueError("Use .wav for the diagnostic listening copy.")
         p = local.atomic_run(args.output, lambda tmp: [local.external("ffmpeg"), "-hide_banner", "-nostdin", "-n",
             "-i", src, "-map", "0:a:0", "-vn", "-af", "aformat=channel_layouts=mono,highpass=f=150,lowpass=f=7000",
-            "-ar", "48000", "-c:a", "pcm_s16le", tmp])
+            "-ar", "48000", "-c:a", "pcm_s16le", tmp], args.overwrite, src)
         local.emit({"output": str(p), "purpose": "Mono, band-limited diagnostic copy. Not the deliverable or an exact phone simulation."})
     return 0
 

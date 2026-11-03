@@ -1,11 +1,9 @@
 # Running Tesseract locally
 
-Resolve this skill from the directory containing its `SKILL.md`. In the sound
-examples, `SKILL` means that absolute directory, whether installed alone or in a
-plugin. Quote paths containing spaces. The optional sound/waveform tools use
-Python 3.9+ and local FFmpeg/ffprobe; they do not install a renderer. If a tool is
-missing, report the specific unavailable check and use the host's available
-media tools where they can establish the same result.
+Resolve this skill from the directory containing its `SKILL.md`. In commands,
+`SKILL` means that absolute directory, whether installed alone or in a
+plugin, and `WORK` means the project's absolute `.tesseract-work` folder (see
+[project lifecycle](#project-lifecycle)). Quote paths containing spaces.
 
 Tesseract uses `tsrct` to edit and render portable `.tsrct` projects. Follow
 [CLI installation](installation.md) to locate the executable,
@@ -68,10 +66,39 @@ Associate exports and previews with their source revision; avoid saving every
 small tweak. Tidy disposable intermediates without deleting useful history.
 These are workspace conventions, not file-format requirements or mandatory files.
 
+### Storage
+
+A `.tsrct` carries every packaged image, font, clip, and model, so each full copy
+of the document stores all of them again. Review stills, exports, and JSON dumps
+accumulate the same way. Keep useful history without repeating it:
+
+- Checkpoint a revision as checked-out JSON, for example
+  `tsrct project checkout --project project.tsrct --output Versions/02-layout.json`.
+  To return to it, commit that file to the current document; the packaged media it
+  references must still be in the document. Keep a full `.tsrct` copy only for a
+  milestone the user approved or a state the JSON cannot restore.
+- `checkout` and `inspect --pretty` write indented copies of the whole document,
+  which can be large for a detailed scene. Reuse their names in `.tesseract-work/`
+  instead of keeping one per revision, and keep checkpoints only for meaningful
+  revisions.
+- Write routine checks to stable names in `.tesseract-work/checks/` and overwrite
+  them on the next pass. Name a still for its revision only when it records a
+  decision or a before/after comparison you will show. Once a round's findings are
+  in the notes, delete that round's checks.
+- Keep the current export and the exports the user reviewed. Delete superseded
+  iteration exports; their checkpoints can render them again.
+- Delete frame dumps, lossless or decoded intermediates, and analysis caches once
+  their results are recorded.
+- In long sessions, check the size of `.tesseract-work/` and `Versions/` with
+  `du -sh` and retire superseded material before it reaches a few gigabytes.
+
+Never delete the user's original media, the current document and export, or a
+milestone the user approved.
+
 ## Before editing
 
-Run `tsrct --version`, `tsrct project --help`, and `tsrct export --help`.
-If `import-asset` or `--format` is missing, follow [installation](installation.md).
+Run `tsrct --version` and `tsrct project --help` once per session.
+If `import-asset` is missing, follow [installation](installation.md).
 The examples below run from the chosen project root; adapt filenames to the task.
 Create an empty document for new work, or inspect the intended existing document:
 
@@ -83,18 +110,13 @@ Creation makes one empty composition (`main`) on a 1080×1920 canvas, lasting
 three seconds. Inspect its ID before adding content. Change canvas, duration,
 or composition name by checking out and committing the editable document JSON.
 The document `duration` is in seconds; layer ranges and action times are milliseconds.
-For HDR inspection, use `tsrct preview --project P --time T --output out.png --hdr`.
-This is a 16-bit PQ BT.2020 RGBA PNG tagged with `cICP` `[9, 16, 0, 1]`.
-Read RGB samples as `E = sample / 65535`; decode to cd/m² using
-`10000 * (max(E^(1/m2) - c1, 0) / (c2 - c3 * E^(1/m2)))^(1/m1)` with
-`m1=2610/16384`, `m2=2523/32`, `c1=3424/4096`, `c2=2413/128`, `c3=2392/128`.
-Graphics white (linear 1.0) is the document's `hdrGraphicsWhiteNits`, or
-609 cd/m² by default (gain × 203 cd/m²). HDR video luminance is independent of this setting. Alpha is straight, linear coverage.
-Do not judge HDR luminance from an SDR viewer or an 8-bit decode. Without the
-flag, preview stays 8-bit SDR. `filmstrip --hdr` writes the same 16-bit PQ PNG,
-including labels at the document's graphics white. Cells are downsampled in
-premultiplied linear light before PQ encoding; this is not an 8-bit contact sheet.
-HDR filmstrips have a 200 MB float-canvas limit (16 bytes/pixel).
+
+Preview, filmstrip and export are SDR by default, even for footage that reports
+`hdrTransfer` `hlg` or `pq`. Read [HDR](hdr.md) before using `--hdr` on any of
+them (16-bit PQ PNGs cannot be judged by eye), when such footage should stay HDR
+in the delivery, when revising a project delivered in HDR, when setting
+`hdrGraphicsWhiteNits` or RGB above 1, or when importing EXR, HEIC/HEIF, AVIF,
+16-bit PNG or gain-map JPEG images.
 
 Native preview renders at the document's authored dimensions, including custom
 canvas sizes. Dimensions must be positive, at most 7680 pixels per side and
@@ -121,8 +143,9 @@ tsrct project schema --document > .tesseract-work/document.schema.json
 The document contains one composition. Use groups for related parts; do not
 create extra compositions or base-video, caption, or audio tracks.
 
-Use IDs from `.tesseract-work/project.json`. Read the relevant action definition from the
-schema; do not invent fields.
+Use IDs from `.tesseract-work/project.json`. Search the saved schemas for the
+relevant definition; never read them whole (the action schema is over 1 MB).
+Do not invent fields.
 
 ## Edit loop
 
@@ -144,28 +167,33 @@ Re-checkout after action batches so a stale JSON file cannot undo those changes.
 Use the working examples in the references, adapting IDs, timing, and geometry
 to the inspected project.
 
-Apply and review:
+Apply, then render a strip across the changed beat's active range (here 0–3 s).
+When text or layout changed, also render a full preview at a time the changed
+element is visible:
 
 ```sh
 mkdir -p Previews .tesseract-work/checks
 tsrct project apply --project project.tsrct --actions .tesseract-work/edits.json
-tsrct preview \
-  --project project.tsrct \
-  --time 1 \
-  --output .tesseract-work/checks/layout.png
+tsrct filmstrip --project project.tsrct --start-ms 0 --duration-ms 3000 \
+  --interval-ms 250 --items-per-row 4 --tile-width 135 --tile-height 240 \
+  --output Previews/Filmstrip.png
+# Only if text or layout changed:
+tsrct preview --project project.tsrct --time 1 --output .tesseract-work/checks/layout.png
 ```
 
-Inspect `.tesseract-work/checks/layout.png` for layout. Review motion across its active range:
+`project apply` and `project commit` print a JSON result whose `warnings` array
+lists authoring mistakes that render without an error but not as intended, such
+as a hidden track-matte layer. `project inspect`, `project checkout`, `preview`,
+`filmstrip`, and `export` print the same warnings to stderr as `warning:` lines.
+Each names the layers and the fix; correct them before reviewing frames.
 
-```sh
-tsrct filmstrip --project project.tsrct \
-  --start-ms 0 --duration-ms 3000 --interval-ms 250 --output Previews/Filmstrip.png
-```
-
-Open and inspect the generated images. Follow [filmstrip review](filmstrip-review.md)
-for sampling, solo diagnostics, and the correction loop.
+Open and inspect the generated images together. Correct visible problems, save,
+and render the affected range again.
 
 ## Finish
+
+Before the first export, run `tsrct export --help`; if `--format` is missing,
+follow [installation](installation.md).
 
 ```sh
 tsrct export \
@@ -180,7 +208,7 @@ tsrct export --project project.tsrct --format prores --output finished.mov
 tsrct export --project project.tsrct --format prores --fx-solo main:3 --output overlay.mov
 ```
 
-Full-project export includes the mix and the black canvas background. For alpha,
+Full-project export includes the mix and the document background. For alpha,
 use solo export of the overlay layer or a group containing the graphic. Solo uses the selected
 layer/group's active window, preserves canvas placement, and omits audio. Inspect
 its alpha channel and composite over contrasting backgrounds before delivery.
@@ -193,68 +221,13 @@ with output size and frame rate (10 Mbps at 1080p30, up to 60 Mbps); ProRes uses
 its codec's quality settings. Fractional/source-matched FPS is not exposed.
 Inspect the encoded dimensions, frame rate, audio, and visuals before delivery.
 
-Export is SDR unless you add `--hdr [auto|pq|hlg]`. HDR encodes HEVC Main 10 MP4.
-Bare `--hdr` means `auto`: match the majority transfer of source videos, or HLG
-when none declare one. Use `--hdr pq` for graphics/image-only documents or any
-content above HLG's approximately 766 cd/m² peak. PQ can represent up to 10,000
-cd/m²; `--hdr hlg` explicitly selects the existing HLG convention (0.75 = 203
-cd/m², peak approximately 766). Selection changes encoding, not source luminance.
-`--hdr` cannot be combined with `--format prores` or `--fx-solo`. Preview and
-filmstrip also accept `--hdr` (always PQ PNG, not auto/HLG). Inspect HDR with a
-display or tool that reads its color metadata, not an 8-bit SDR image viewer.
-
-In an HDR export, white graphics (text, shapes, images; color 1.0) default to
-about 609 cd/m², three times the 203 cd/m² diffuse white of HDR video, so text
-reads clearly white on phones. Set the document's `hdrGraphicsWhiteNits`
-(100–1000) through checkout/commit to change it; 203 puts graphics on the
-video's diffuse white (broadcast convention). Above about 766, HLG clips
-highlights; choose PQ to preserve them. HDR images, like HDR video, retain their
-source luminance independently of this setting. SDR output is unaffected.
-
-### Choosing graphics white
-
-This setting matters only for HDR output. Keep the default unless the delivery
-specification or the intended appearance calls for a change; it is a product
-default, not a universal HDR mastering target.
-
-- Follow the recipient's delivery specification first. When it calls for
-  BT.2408 reference white, use 203 cd/m². This is the nominal Graphics White in
-  [ITU-R BT.2408, section 2.1](https://www.itu.int/dms_pub/itu-r/opb/rep/R-REP-BT.2408-8-2024-PDF-E.pdf),
-  not a requirement shared by every broadcaster or streaming platform.
-- If graphics look glaring or detached, especially large white areas over dark
-  video, try a lower value and review representative shots on an HDR-aware display.
-  Preserve the intended caption legibility rather than matching luminance blindly.
-- To measure, render `preview --hdr` and use the
-  [PQ decoding and luminance calculation](color-grading.md#hdr-output-and-stills).
-  Sample the opaque interior of white graphics, avoiding antialiased edges, and
-  compare it with a representative diffuse-white object in the video. Avoid
-  specular highlights and do not treat skin as a white reference. Lighting and
-  creative grading change scene whites, so there is no universal graphics-to-video
-  brightness ratio. Re-render and review after changing the value.
-
-For neutral authored RGB, absolute luminance is `linear(value) ×
-hdrGraphicsWhiteNits`, where `linear` is the sRGB EOTF continued above 1:
-`((value + 0.055) / 1.055)^2.4` for values above 0.04045.
-
-| Encoded RGB value | At graphics white 609 (cd/m²) | At graphics white 203 (cd/m²) |
-| --- | ---: | ---: |
-| 1.0 | 609 | 203 |
-| 1.1 | 757 | 252 |
-| 1.35 | 1211 | 404 |
-| 2.0 | 3017 | 1006 |
-
-These are intended neutral-paint luminances before output clipping, not a
-per-channel luminance formula for colored paint. HLG clips at approximately
-766 cd/m², so the default 609 leaves little real headroom. For extended-color
-headroom, agents should lower `hdrGraphicsWhiteNits` to around 203 and export
-with `--hdr pq`. SDR instead ratio-fits extended encoded RGB by its largest
-channel; values at or below 1 retain the existing SDR path.
-
 ```sh
 tsrct export --project project.tsrct --resolution 4k --fps 60 --output finished.mp4
-tsrct export --project project.tsrct --hdr pq --output finished-hdr.mp4
-tsrct filmstrip --project project.tsrct --timestamps-ms 0,1000 --hdr --output hdr-strip.png
 ```
+
+Export is SDR unless you add `--hdr [auto|pq|hlg]`. Read [HDR](hdr.md) before an
+HDR export, when revising a project delivered in HDR, or when setting
+`hdrGraphicsWhiteNits`.
 
 To export only a timeline segment, use milliseconds (for example, 2–5 seconds):
 
@@ -266,8 +239,22 @@ Either flag may be omitted: start defaults to zero, and duration defaults to the
 remaining timeline. With `--fx-solo`, start is relative to the selected layer's
 active window; solo exports still omit audio. An out-of-bounds range fails.
 
-Follow [review and delivery](review-and-delivery.md#handoff) for final checks and
-presenting the result from this project root.
+To export only the audio mix as a WAV, use `export-audio`. It takes the same
+range flags as `export`:
+
+```sh
+tsrct export-audio --project project.tsrct --start-ms 2000 --duration-ms 3000 --output .tesseract-work/checks/mix.wav
+```
+
+A long export can take many minutes.
+Path-traced Scene3D exports are the usual case.
+If the host can run a command in the background, start it that way with `--json` and
+stderr (NDJSON progress) sent to a log such as `.tesseract-work/export.log`;
+otherwise run it in the foreground with a timeout longer than the render. Wait in
+blocking steps of about 4 minutes or less, reading only the log's last line
+(`completed`, `total`, `etaSeconds`) between steps. Run one render at a time.
+Never split an export or lower its settings to fit a wait. Open or probe the
+output only after the command exits, and do not edit the document while it renders.
 
 The `.tsrct` document is the portable editable source. Checked-out JSON becomes
 the saved source only through `project commit`; do not edit the ZIP manually.
@@ -276,6 +263,8 @@ the saved source only through `project commit`; do not edit the ZIP manually.
 
 - Never edit `project.tsrct` as text.
 - Preserve the input with `--output .tesseract-work/revised.tsrct` when experimenting.
+  To keep the change, re-apply it to the project document or move the trial over
+  it; delete a discarded trial.
 - `project apply` is atomic: a rejected action batch does not publish partial
   project changes.
 - Preserve the `.tsrct` document and its packaged resources.
@@ -286,25 +275,5 @@ the saved source only through `project commit`; do not edit the ZIP manually.
   names in the error identify the requested faces.
   If import fails, report the actual error. Do not silently replace a requested face.
 - FX text style and layout changes go through `project apply`.
-
-## Media inspection and optional audio helpers
-
-Import reports metadata, not what a shot depicts or what its audio means. Inspect
-source frames and listen through the host's media tools before choosing cuts.
-For local metadata when FFmpeg tools are available:
-
-```sh
-ffprobe -v error -show_streams -show_format -of json /absolute/path/footage.mov
-```
-
-Use [waveform editing](waveform-editing.md) for source and rendered audio views,
-and [audio and timing](audio-and-timing.md) for sound helpers and gain envelopes.
-The helpers synthesize WAV accents on demand and inspect audio; they do not
-import media or mutate a project. Import their output with `project import-asset --kind audio`,
-then place editable Audio layers. Audio-only export is not exposed by this CLI.
-Use the CLI to modify documents; do not edit the ZIP directly.
-
-For a dialogue-only diagnostic, check out the working document and commit a
-separate `.tsrct` copy with music/SFX gains and any gain animators muted. Export
-that copy to MP4 and inspect its audio directly with the waveform helper. Preserve
-the working mix and source files; do not claim unperformed listening checks.
+- If preview, filmstrip, or export reports a GPU, Vulkan, or encoder error, read
+  [runtime failures](install-cli.md#runtime-failures) before changing the environment.

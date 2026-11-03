@@ -3,8 +3,8 @@
 Tesseract grades footage with native, editable color operations. Measure first,
 change one thing at a time, and check the result with numbers and frames.
 
-Exact fields and limits come from `project schema`; search it for the effect or
-action you need. Every grading value is an ordinary effect field, so the result
+Exact fields and limits come from the installed action schema; search it for the
+effect or action you need. Every grading value is an ordinary effect field, so the result
 stays editable in Tesseract.
 
 ## What is available
@@ -36,8 +36,8 @@ again as a Creative LUT. Neither HDR output nor `hdrGraphicsWhiteNits` replaces
 camera normalization or exposure correction.
 
 In a default (`legacyDisplay`) document, grading controls operate on
-display-referred SDR Rec.709. HDR exports are available with `export --hdr pq|hlg`;
-HDR preview/filmstrip use `--hdr`. These do not turn the grading controls into a
+display-referred SDR Rec.709. HDR (PQ or HLG) export, preview, and filmstrip are
+available; see [HDR](hdr.md). These do not turn the grading controls into a
 scene-linear HDR grading system. For scene-referred grading with filmic
 highlights and a managed SDR/HDR output, opt the document into
 [ACES](#aces-scene-referred-color-management).
@@ -157,8 +157,8 @@ replacement media or rebuild the edit just to obtain local color control.
 ## Measuring the picture
 
 Render the saved document with `preview` (one full-resolution frame) or
-`filmstrip` (several frames; set `--tile-width`/`--tile-height` to the project's
-aspect ratio, for example 135×240 for portrait; `--fx-solo composition:layer` isolates one layer
+`filmstrip` (several frames; set the tile size to the project's
+aspect ratio, for example 135×240 for portrait; a solo strip isolates one layer
 over its active window, with transparent pixels around it), then measure the
 PNG with tools available on the host, for example Python. Look at the frames
 as well; numbers do not replace seeing the picture.
@@ -167,8 +167,9 @@ as well; numbers do not replace seeing the picture.
 tsrct preview --project project.tsrct --time 2.5 --output /absolute/path/edit/.tesseract-work/checks/grade-2500.png
 ```
 
-Without `--hdr`, preview and filmstrip PNGs are 8-bit display-referred SDR
-Rec.709 code values. Divide by 255
+SDR preview and filmstrip PNGs are 8-bit display-referred SDR
+Rec.709 code values. For HDR PNGs, PNGs whose transfer is unknown, HDR export
+or `hdrGraphicsWhiteNits`, read [HDR](hdr.md). Divide SDR values by 255
 for normalized values (0 black, 1 white). Pixels with alpha 0 are empty canvas:
 exclude them, or footage that does not fill the frame reads as black.
 
@@ -201,8 +202,9 @@ Decode each pixel using all four signalled stream properties (ffprobe
 A color-managed decoder that honours all four properties is also acceptable. Matrix
 coefficients can be signalled independently of the primaries, and getting the
 order or the matrix wrong skews Lab and ΔE. For SDR use a 100-nit
-reference white; for HDR decode PQ to absolute nits or HLG with a documented
-reference display/system gamma, not an SDR transfer. Use the same documented
+reference white; for HDR decode PQ to absolute nits (formula in
+[HDR](hdr.md#hdr-preview-and-measurement)) or HLG with a documented reference
+display/system gamma, not an SDR transfer. Use the same documented
 Lab reference white for both sides. Report component-wise **median per-pixel
 Lab**, not mean Lab or Lab of mean/median encoded RGB. Report neutral a*/b*
 (target |a*| and |b*| ≲ 5), skin hue
@@ -294,11 +296,12 @@ a sky shot and an interior need not share a brightness distribution.
 
 ## Creative LUTs
 
-Import a 3D `.cube` file, then reference its asset ID:
+Import a 3D `.cube` file as a LUT, then reference its asset ID:
 
 ```sh
 tsrct project import-asset --project project.tsrct --file /absolute/path/look.cube --asset-id film-look --kind lut
 ```
+
 
 ```json
 [{"type":"addFxLayerEffect","compositionId":"main","layerId":4,"effectId":20,
@@ -315,7 +318,7 @@ Only use LUT files the user supplied or is licensed to use.
 
 ## Log footage (Input Transform)
 
-`project import-video` reports `cameraEncoding`. `"camera:apple-log:v1"` means
+Footage import reports `cameraEncoding`. `"camera:apple-log:v1"` means
 the file declares Apple Log; `null` means unknown, not "not log" (exported
 copies often drop the declaration). Confirm a flat, low-contrast look in a frame
 before treating unknown footage as log.
@@ -343,11 +346,11 @@ In an ACES document, do not use a LUT: declare the camera with `cameraInput`
 (see [Camera log footage in ACES](#camera-log-footage-in-aces)). The rest of this
 section is for legacy documents.
 
-Tesseract CLI does not bundle camera conversion LUTs. Use the camera maker's
+No camera conversion LUTs are bundled. Use the camera maker's
 official conversion `.cube` (for Apple Log, Apple's Apple Log to Rec.709 LUT):
 one the user supplies, or the maker's free download when you have network
-access. Never author or approximate a conversion LUT yourself. Import it with
-`--kind lut`, then set it on the layer:
+access. Never author or approximate a conversion LUT yourself. Import it as a
+LUT, then set it on the layer:
 
 ```json
 [{"type":"updateLayerField","compositionId":"main","layerId":4,"propertyName":"inputTransform",
@@ -366,8 +369,8 @@ By default a document is `legacyDisplay`: everything below in this guide that
 says "display-referred SDR" describes that mode. A document can instead opt in
 to ACES. Then footage is treated as scene light, composited in linear ACEScg,
 graded on ACEScct, and shown through the ACES 2.0 output transform. That output
-is SDR BT.1886 by default, and HDR 1000-nit (P3-D65 limited) with
-`export --hdr pq|hlg`.
+is SDR BT.1886 by default, and HDR 1000-nit (P3-D65 limited) in a PQ or HLG
+export.
 
 **Choose ACES** when footage is camera log or HDR, when highlights should roll
 off filmically instead of clipping, when glows, dissolves and light leaks should
@@ -378,14 +381,14 @@ of every existing grade, so decide before grading.
 
 ### Turning it on
 
-`colorManagement` is a document setting. Set it with `project apply`:
+`colorManagement` is a document setting. Set it with an action batch:
 
 ```json
 [{"type":"setColorManagement","colorManagement":{"workingSpace":"acescct","outputTransform":"aces2.0","compositing":"footageOnly"}}]
 ```
 
 Use `{"workingSpace":"legacyDisplay"}` to return to legacy. Editing the root
-`colorManagement` field through `project checkout` / `project commit` also
+`colorManagement` field in the document JSON also
 works. ACES requires both `outputTransform` and `compositing`; omit them in
 legacy mode. Use only fields and values supported by the installed schema.
 
@@ -397,7 +400,7 @@ legacy mode. Use only fields and values supported by the installed schema.
 
 `renderDomain` overrides one Video, Image or Group: `"scene"` puts it, and for a
 Group its whole subtree, in ACES; `"display"` keeps that layer legacy (for
-example a graphic on top of footage). Set it with `project apply`:
+example a graphic on top of footage). Set it with an action batch:
 
 ```json
 [{"type":"updateLayerField","compositionId":"main","layerId":4,"propertyName":"renderDomain","value":"scene"}]
@@ -525,8 +528,8 @@ saturation of a blue sky only:
 
 Measure the target's HSV hue and saturation first and center the range on them.
 
-Dedicated secondary matte preview is not available in the current engine or
-public CLI. Inspect the selection with this visual diagnostic instead; do not
+Dedicated secondary matte preview is not available in the current engine.
+Inspect the selection with this visual diagnostic instead; do not
 promise a matte-only readback.
 Mask references identify masks on the same layer; use mask mode `none` for an
 effect-only mask. Unknown mask IDs are rejected by authoring.
@@ -589,33 +592,6 @@ select a neighboring black frame. Confirm actual frame timestamps and move
 sampling into stable picture before diagnosing missing footage. Never deliver
 if a frame that should show picture is black; investigate rather than dismissing
 it as an HDR viewing artifact. Verify footage as well as overlays.
-
-## HDR output and stills
-
-`preview --hdr` and `filmstrip --hdr` write 16-bit straight-alpha BT.2020 PQ
-PNGs (`cICP` [9,16,0,1]), not SDR code values. Decode RGB samples to cd/m²:
-with `E = sample/65535`, use
-`10000 * (max(E^(1/m2)-c1,0)/(c2-c3*E^(1/m2)))^(1/m1)`, where
-`m1=2610/16384`, `m2=2523/32`, `c1=3424/4096`, `c2=2413/128`, `c3=2392/128`.
-Alpha is linear coverage; skip empty pixels. Do not measure PQ codes as SDR luma.
-For physical luminance, use linear BT.2020 weights 0.2627/0.6780/0.0593 after decoding.
-
-`export --hdr` (or `--hdr auto`) writes HEVC Main 10 MP4 using the majority
-source-video transfer, HLG when none declares one. `--hdr pq` / `--hdr hlg`
-selects it explicitly; ProRes and `--fx-solo` cannot be combined with HDR export.
-The document's `hdrGraphicsWhiteNits` (100–1000; default about 609 cd/m²) sets
-white graphics luminance, not the absolute luminance of ungraded HDR media.
-Keep the default unless the delivery specification or the intended appearance
-calls for a change. For reference-white guidance and a measurement workflow,
-see [choosing graphics white](local-operation.md#choosing-graphics-white).
-
-Native image import supports HDR cICP-tagged 16-bit PNG, EXR, gain-map JPEG,
-HEIC/HEIF and AVIF. Actual HDR decoding depends on supported metadata and native
-decoder availability; a file extension alone is not an HDR guarantee. These HDR
-image paths are not supported on web. Use an HDR-aware viewer to review output.
-The public CLI exports video, not PNG stills: use preview/filmstrip for PNG
-measurements. If another host supplies export PNGs, inspect their bit depth and
-transfer metadata before choosing SDR or PQ measurement.
 
 ## Limitations
 

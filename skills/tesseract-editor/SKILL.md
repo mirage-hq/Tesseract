@@ -13,7 +13,7 @@ The [browser API reference](references/browser-api.md) covers initialization, ac
 
 ## Runtime and serving
 
-`references/cli-version.txt`, when present, pins the browser runtime release too. The [installation reference](references/installation.md) identifies the release repository. The browser assets are `tesseract-<VERSION>-web.zip` and its `.sha256`; verify the checksum before use. The archive contains `runtime/`, used beside `index.html` in the examples. Its generated JavaScript, types, and WASM must come from the same release. No npm installation is needed. `version()` returns the runtime release.
+Download the browser runtime from [the CDN](references/runtime.md) into a local `runtime/` directory beside `index.html`. Use both files from the specified version. No npm installation or native CLI is needed. `version()` returns the runtime release.
 
 The editor needs HTTP serving and browser GPU/media support. Its HTML depends on the runtime files; attachment viewers may not execute WASM. CLI or skill updates do not require upgrading an existing editor’s runtime.
 
@@ -22,3 +22,9 @@ The editor needs HTTP serving and browser GPU/media support. Its HTML depends on
 `actionSchema()` describes supported engine actions. UI controls, playback scheduling, and selection gestures belong to the application. Await rendering so frames do not overlap; edit groups combine continuous changes into one history entry.
 
 `TesseractEngine.create(file)` accepts a File or Blob. `toBlob()` packages the current document with its original assets; it does not write to disk. Overwriting the source file can invalidate asset reads; the API reference describes reopening the saved Blob. Page refresh discards unsaved edits.
+
+## Review before handoff
+
+Read and follow the [critic review](references/critic-review.md): two independent critics, an art director and a creative-tool UX designer, score the running editor, and you revise between rounds until both rate it at least 8.5/10, for at most three review rounds. Tell the user the review plan, each round's scores and feedback, and the final score.
+
+The art director judges the editor's own visual design (layout, hierarchy, typography, color, and control states) and whether the preview shows the document without visible defects; the opened `.tsrct` is the user's content and outside the review, so give the critics this scope. Test and capture on a copy of the project, never the user's file. Between rounds, revise the editor source, reload it, and recapture the screenshots. If a step cannot be captured, such as a permission prompt or a canvas left blank because the automated browser lacks WebGPU (confirm that `navigator.gpu` is missing or `requestAdapter()` returns null there), tell the critics so they list it under Not evaluated.

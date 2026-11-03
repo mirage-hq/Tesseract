@@ -1,15 +1,6 @@
-# CLI installation
+# Installing the CLI
 
-The skills and plugin contain instructions, not the CLI. First look for the installed
-command (`~/Library/Application Support/Tesseract/bin/tsrct` on macOS,
-`%LOCALAPPDATA%\Tesseract\bin\tsrct.cmd` on Windows, or
-`${XDG_DATA_HOME:-$HOME/.local/share}/Tesseract/bin/tsrct` on Linux), then `tsrct` on PATH,
-and run `--version`.
-
-If `cli-version.txt` exists beside this guide, it pins the required CLI version.
-Check the executable's reported version against it. Without a pin, this is a local
-development package: use an existing working CLI, or ask which public CLI version
-to install. Do not substitute the latest release or an internal build.
+## Choose the bundle
 
 The CLI supports macOS, 64-bit Windows, and Linux x86_64 (glibc 2.35+). Pick the bundle before installing:
 
@@ -27,14 +18,9 @@ The CLI supports macOS, 64-bit Windows, and Linux x86_64 (glibc 2.35+). Pick the
 
 On any other host, report that this host is unsupported and stop installation.
 
-For a missing or mismatched pinned CLI, download the required bundle, then
-verify and install it as described below.
-
 ## Public CLI downloads
 
-Use the exact version from `cli-version.txt` beside this guide, or the public CLI
-version specified by the user for an unpinned development package. Do not guess
-a latest version or substitute an internal build.
+Use the exact version from `cli-version.txt` beside this guide.
 
 Download these two files from
 `https://github.com/mirage-hq/tesseract/releases/download/v<VERSION>/`:
@@ -43,7 +29,7 @@ Download these two files from
 - `tesseract-<VERSION>-<PLATFORM>-<ARCH>.zip.sha256`
 
 Use `darwin-arm64`, `darwin-x86_64`, `windows-x86_64`, or `linux-x86_64` for
-`<PLATFORM>-<ARCH>`, following the host checks in [installation](#cli-installation).
+`<PLATFORM>-<ARCH>`, following the host checks in [Choose the bundle](#choose-the-bundle).
 Use an available downloader (for example, `curl -fL` on macOS or
 `Invoke-WebRequest` on Windows) or a browser. GitHub login and GitHub CLI are
 not required. Save both files in a fresh download directory.
@@ -51,12 +37,11 @@ not required. Save both files in a fresh download directory.
 If network permissions block the download, use the agent's normal permission
 flow. If the release or platform asset is unavailable, report the exact URL and
 error and stop installation; do not request private repository access or guess
-another version. The release page is
+another version.
+The release page is
 `https://github.com/mirage-hq/tesseract/releases/tag/v<VERSION>`.
 
-Return to [installation](#cli-installation) to verify the checksum, extract,
-install, and check the executable's version. Downloaded archives are not installed
-until those checks pass.
+Downloaded archives are not installed until the checks below pass.
 
 ## Verify and install
 
@@ -73,8 +58,8 @@ until those checks pass.
 2. Run the installed command with `--version` using its quoted absolute path
    (`"$HOME/Library/Application Support/Tesseract/bin/tsrct"` on macOS,
    `"$env:LOCALAPPDATA\Tesseract\bin\tsrct.cmd"` on Windows, or
-   `"${XDG_DATA_HOME:-$HOME/.local/share}/Tesseract/bin/tsrct"` on Linux) and use that path for
-   subsequent commands.
+   `"${XDG_DATA_HOME:-$HOME/.local/share}/Tesseract/bin/tsrct"` on Linux), check it
+   against `cli-version.txt`, and use that path for subsequent commands.
 
 The installers check platform, architecture, minimum OS version, and bundle
 checksums before switching the installed command. Installing the bundle does not

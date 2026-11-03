@@ -31,13 +31,14 @@ Reserve motion for changes that guide attention. Give the viewer a stable interv
 | Per-character reveals | Text Animator and selectors; drive fields with dynamics | [FX authoring](fx-authoring.md#text-with-an-available-font) and [motion](motion.md) |
 | Coordinated movement | `Group` with child layers and stable parent IDs | [FX authoring](fx-authoring.md) |
 | Drawn paths / linework | `Shape` paths, fills, strokes; animate supported path fields | the document schema's Shape definitions |
-| A moving reveal | Track matte or path mask using a real layer reference | the document schema's mask and track-matte definitions |
+| A moving reveal | Track matte or path mask using a real layer reference; leave a track-matte layer visible (it is not drawn itself, and hiding it drops the matte) | the document schema's mask and track-matte definitions |
 | Treatment across several layers | Group effects or an Adjustment layer above the affected siblings | the document schema's effect definitions |
 | Soft lighting, blur, grade | Ordered typed layer effects | the document schema's effect definitions |
 | 3D-looking layer arrangement | Supported 3D transform properties and depth ordering | the document schema and [motion](motion.md) |
 | Custom pixel treatment | Bounded premultiplied-alpha WGSL custom shader | [custom shader contract](custom-shader.md) |
 
-This is not a Blender runtime. Distinguish transforming 2D layers in 3D from general meshes, physics, or a full 3D scene.
+This is not a Blender runtime.
+Transforming 2D layers in 3D belongs here; general meshes, cameras, lights, imported models and physics are Scene3D items, authored with the Tesseract: 3D Scenes skill and [Scene3D basics](scene3d-basics.md).
 
 ## Timing and motion character
 

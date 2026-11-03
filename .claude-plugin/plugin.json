@@ -1,6 +1,6 @@
 {
   "name": "tesseract",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Tesseract brings professional creative tools into your agent workflow. Work with video layers, compositions, keyframes, and audio in one connected project. Preview the result, direct a revision, and render the finished video locally.",
   "author": {
     "name": "Mirage"
@@ -12,5 +12,10 @@
     "motion-graphics",
     "editing"
   ],
-  "icon": "./assets/plugin-icon.svg"
+  "displayName": "Tesseract",
+  "icon": "./assets/plugin-icon.png",
+  "documentationUrl": "https://mirage.app/tesseract",
+  "supportUrl": "https://captions.ai/help/tesseract",
+  "privacyPolicyUrl": "https://mirage.app/legal/privacy-policy",
+  "termsOfServiceUrl": "https://mirage.app/legal/tesseract-terms"
 }
