@@ -9,7 +9,7 @@ If the editor needs to import or export other tools’ project formats, such as 
 
 The browser engine opens, previews, edits, and saves `.tsrct` projects locally. A static HTML application is sufficient; no backend or native CLI is required. The browser runtime does not export video.
 
-The [browser API reference](references/browser-api.md) covers initialization, actions, playback, and saving. Examples: [general layer controls](examples/timeline-editor/README.md) and [controls for a bundled project](examples/bouncing-ball/README.md).
+The [browser API reference](references/browser-api.md) covers initialization, actions, playback, and saving. Example: [general layer controls](examples/timeline-editor/README.md).
 
 ## Runtime and serving
 
