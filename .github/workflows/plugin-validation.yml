@@ -28,7 +28,8 @@ jobs:
               assert all(not stat.S_ISLNK(entry.external_attr >> 16) for entry in archive.infolist())
               roots = {PurePosixPath(name).parts[1] for name in names if len(PurePosixPath(name).parts) > 1}
               assert roots <= {"skills", "assets", ".codex-plugin", ".claude-plugin", "plugin.json", "mcp.json",
-                               ".mcp.json", "TERMS.md", "LICENSE", "THIRD_PARTY_NOTICES.md"}, roots
+                               ".mcp.json", "TERMS.md", "LICENSE", "THIRD_PARTY_NOTICES.md",
+                               ".github", "docs", "player", "README.md"}, roots
               manifests = [json.loads(archive.read("tesseract/" + name)) for name in
                            ("plugin.json", ".codex-plugin/plugin.json", ".claude-plugin/plugin.json")]
               assert all(m["name"] == "tesseract" and m["version"] == manifests[0]["version"] for m in manifests)
