@@ -13,7 +13,6 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
     permissions:
       contents: read
       pages: write
@@ -24,14 +23,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
-      - name: Download the pinned CDN runtime
+      - name: Configure the pinned CDN runtime
         run: |
           version=$(cat skills/tesseract-editor/references/cli-version.txt)
           [[ "$version" =~ ^0\.[0-9]+\.0$ ]]
           mkdir -p player/runtime
-          for file in web_api.js web_api_bg.wasm TERMS.md THIRD_PARTY_NOTICES.md; do
-            curl --fail --location --retry 3 "https://captions-cdn.com/tesseract/$version/$file" --output "player/runtime/$file"
-          done
+          printf 'export { default } from "https://captions-cdn.com/tesseract/%s/web_api.js";\nexport * from "https://captions-cdn.com/tesseract/%s/web_api.js";\n' "$version" "$version" > player/runtime/web_api.js
       - uses: actions/upload-pages-artifact@v4
         with:
           path: player
@@ -41,4 +38,3 @@ jobs:
         uses: actions/deploy-pages@v4
         with:
           artifact_name: github-pages-${{ github.run_attempt }}
-          timeout: 1800000
