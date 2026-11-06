@@ -13,6 +13,7 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 35
     permissions:
       contents: read
       pages: write
@@ -34,6 +35,10 @@ jobs:
       - uses: actions/upload-pages-artifact@v4
         with:
           path: player
+          name: github-pages-${{ github.run_attempt }}
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: github-pages-${{ github.run_attempt }}
+          timeout: 1800000
