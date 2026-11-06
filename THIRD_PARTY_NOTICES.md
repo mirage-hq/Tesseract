@@ -39,6 +39,17 @@ the bundle: Tesseract downloads them from the Captions CDN, as
 denoiser. The weights are licensed under the Apache License, Version 2.0; see
 `licenses/OIDN-weights.txt`. Their repository has no NOTICE file.
 
+The `personMatte` effect runs neural networks whose graphs are compiled into
+Tesseract: Google's MediaPipe Selfie Segmentation (general) and PaddleSeg's
+PP-HumanSegV2-Lite portrait model. Each is licensed under the Apache License,
+Version 2.0. Their weights are not in the bundle: Tesseract downloads them from
+the Captions CDN, under `models/`, when a render first uses the effect.
+Tesseract runs modified copies: the graphs were converted to ONNX and then to
+Burn, some with fixed input shapes and equivalent operator rewrites, and the
+weights were converted to Burn's burnpack format. See `licenses/models/` for
+each model's license and source, and `provenance/models.json`. Their
+repositories have no NOTICE files.
+
 `licenses/` also contains the available notices for each external Cargo package
 compiled for this build, including build tools. `provenance/cargo-dependencies.json`
 records license selections and versions; the corresponding package sources are

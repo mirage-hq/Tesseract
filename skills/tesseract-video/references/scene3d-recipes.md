@@ -53,7 +53,7 @@ Place two boxes using equivalent Euler and quaternion rotations, with an explici
 ```
 
 Check matching box orientations and illuminated top/front faces, not an upside-down camera.
-Euler `order` is uppercase (`XYZ`); quaternion values are unit-length `[x,y,z,w]`.
+Euler `order` is uppercase (`XYZ`); quaternion values are unit-length `[x,y,z,w]` (within 2e-6; six decimal places suffice).
 
 Mesh transforms accept `position`, `rotation`, `scale` (percent) and `anchorPoint`;
 camera/light poses accept position and rotation, **not scale**. The starter camera

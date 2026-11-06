@@ -35,10 +35,10 @@ key times, not a guessed project-time offset. Preview timestamps are project tim
 
 The owning `layerId` is an ordinary composition-layer identity. Child `itemId`,
 material, environment and nested-control IDs are composition-wide item identities.
-Choose unused integer IDs after inspection, preserve them during revisions, and
-inspect canonical readback after creation because colliding add IDs may be reminted.
-The apply report's `actions` lists the actions as applied, with any reminted ID;
-later entries in the same batch still address the IDs they name.
+Choose unused integer IDs after inspection and preserve them during revisions.
+A create or add that names an ID already in use fails, and the apply changes
+nothing.
+
 Scene contents are flat `scene: {items, data, materials}` tables. Objects carry a
 required nullable `parentId`; Mesh/Text/Model/Curve objects reference a `dataId`.
 Geometry and model assets belong to Data, while stable material slots belong to
@@ -90,6 +90,32 @@ tsrct preview --project scene.tsrct --time 1 --output scene.png
 tsrct filmstrip --project scene.tsrct --timestamps-ms 0,1000,2500 --output scene-filmstrip.png
 ```
 
+## Model constraints and node selectors
+
+Model constraints are authored with `addFxScene3DModelConstraint`, using the
+owning Scene3D `layerId` and Model3D object's `itemId`. Each constraint needs its
+own unused `id`; target bindings also need distinct IDs. `lookAt` selects `node`
+and an `aimAxis`, while `twoBoneIk` selects `tip` and optionally `mid` and `root`.
+Both take a `target` binding (for example a world target with an `offset` and
+`offsetSpace: "world"`). IK optionally takes a `pole` binding and
+`keepTipRotation`; `influence` blends the result from 0 to 1.
+
+These numeric selectors are **zero-based glTF node indices in the model asset**,
+not the IDs in the object's `nodes` overrides, nor positions in a skin's `joints`
+array. Use the import report's `model.nodes[].index` alongside its node names and
+parents. A non-skin node is not invalid: ordinary node hierarchies work too.
+IK requires `mid` to be a proper ancestor of `tip`, and `root` a proper ancestor
+of `mid`; an omitted selector uses the next node's immediate parent. For the
+in-repo limb rig, mesh node 0 has no chain, whereas shoulder 1 → elbow 2 → wrist 3
+supports `tip: 3, mid: 2, root: 1`. An override with `id: 7000` for wrist 3 does
+not make `tip: 7000` valid.
+
+Run `tsrct project check --project scene.tsrct` after authoring constraints.
+It resolves packaged GLBs and reports invalid selectors with the constraint ID,
+field, JSON pointer, and valid node range or ancestry requirement. It does not
+require a skin joint and does not reinterpret selectors as override IDs. Check
+is read-only; it diagnoses invalid addresses even in an already-saved project.
+
 ## Rules the validator enforces
 
 Every batch is atomic: a rejected batch changes nothing, and `project apply`
@@ -100,8 +126,12 @@ document. Most rejections in practice come from these rules:
 - Enum values are exact and case-sensitive. A rotation is tagged:
   `{"type":"euler","order":"XYZ","orientation":[0,0,0],"rotationX":-20,"rotationY":30,"rotationZ":0}`
   (`orientation` is a static base, the three channels animate) or
-  `{"type":"quaternion","value":[x,y,z,w]}` with a unit quaternion. Normalize a
-  quaternion copied from a rounded report before using it.
+  `{"type":"quaternion","value":[x,y,z,w]}` with a unit quaternion. Its length
+  must be within 2e-6 of 1, so float32 values (for example from a glTF file) and
+  values with at least six decimal places are accepted. The document stores
+  such a value as its unit form, which is the same rotation. Normalize values
+  with fewer decimal places in double precision first. A rejection reports the
+  measured length.
 - Mesh, Text and Model objects take `{position, rotation, scale, anchorPoint}`;
   cameras and lights take only `{position, rotation}` and optional
   `relationships`.

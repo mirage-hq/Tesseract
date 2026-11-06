@@ -216,7 +216,10 @@ its alpha channel and composite over contrasting backgrounds before delivery.
 Export defaults to 1080p, 30 fps, and H.264 MP4. Select `--resolution 720p|1080p|4k`,
 any positive integer with `--fps`, and `--format mp4|prores`. Resolution preserves the
 project aspect ratio: landscape 4K is 3840×2160, portrait 4K is 2160×3840, and square
-4K is 2160×2160. Keep the authoring canvas unchanged. MP4 bitrate scales automatically
+4K is 2160×2160. Named sizes always set the short side (720, 1080, or 2160 pixels),
+even when this upscales a smaller canvas. The proportional long side rounds to the
+nearest even pixel, with exact ties rounded upward. Keep the authoring canvas unchanged.
+These standalone sizes are not the legacy/iOS canvas multipliers. MP4 bitrate scales automatically
 with output size and frame rate (10 Mbps at 1080p30, up to 60 Mbps); ProRes uses
 its codec's quality settings. Fractional/source-matched FPS is not exposed.
 Inspect the encoded dimensions, frame rate, audio, and visuals before delivery.
