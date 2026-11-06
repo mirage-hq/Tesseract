@@ -2,9 +2,9 @@
 
 Use the version pinned in `cli-version.txt` beside this guide for all browser
 runtime files. This is the runtime release version, not the plugin version.
-Replace `<VERSION>` below with that pin. If the files are unavailable, stop and
-report the missing runtime; do not substitute another release.
-
+Replace `<VERSION>` below with that pin.
+If the files are unavailable, stop and report the missing runtime; do not
+substitute another release or mix files from different distributions.
 
 Download these two files into `runtime/` beside your editor's `index.html`:
 

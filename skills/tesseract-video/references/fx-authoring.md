@@ -94,11 +94,53 @@ Set it to the canvas rectangle (as above, using the project's real canvas size)
 and choose `fit`: `cover` fills and clips, `contain` letterboxes. Select time
 with `sourceRange` and the playback mapping, never with `sourceRect`.
 
-The visible source moment is `mapping.output + inputOffsetMs` and must lie
-inside `sourceRange`: to start a clip at source 5 s, set `inputOffsetMs: 5000`
-and `sourceRange.start: 5000` together. Keyframes on the Video use that same
+For the unit-rate linear mapping above, the visible source moment is parent
+time plus `inputOffsetMs` and must lie inside `sourceRange`: to start a clip at
+source 5 s, set `inputOffsetMs: 5000` and `sourceRange.start: 5000` together. Keyframes on the Video use that same
 content clock (see below), so animate a wrapping Group for "time since the clip
 appeared".
+
+### `timeRemap` and physical media time
+
+All playback times are **milliseconds**, not frame indices. A windowed playback's
+`inputRange` is its visible half-open parent-clock window. `inputOffsetMs` is added
+to the incoming parent-clock time **before** evaluating `mapping` (including a
+`timeRemap` curve). In a unit-rate zero-origin linear map this also shifts the
+source time by that amount; for other rates or nonlinear curves, evaluate the
+mapping rather than treating the offset as an output-time addition.
+
+For example, this maps parent time 0–4000 ms identically to source time:
+
+```json
+{"type":"timeRemap","property":{"keyframes":[
+  {"id":"a","time":0,"value":0,"easing":{"type":"linear"}},
+  {"id":"b","time":4000,"value":4000,"easing":{"type":"linear"}}
+],"before":"inactive","after":"inactive"}}
+```
+
+Use this as `playback.mapping`, with `inputOffsetMs: 0`. Key `time` is the
+mapping's input clock in ms; `value` is its output/source time in ms (fractional
+values are allowed). `before`/`after` select extrapolation outside the keys;
+`inactive` produces no mapped sample there. The Video's `sourceRange` further
+restricts the mapped source window. A decreasing curve plays backward, and a
+held value freezes that source moment. Wrapping Groups compose their own clock
+mappings before the Video's mapping.
+
+Media sampling retains the precise physical output sample through those maps,
+quantizing only at the decoder's microsecond interface. Property/visibility
+clocks still use their existing integer-ms rules. Source selection remains the
+last presentation timestamp at or before the request, with the existing native
+499 µs guard; it is not nearest-frame selection. Reverse/discontinuous mappings
+retain their boundary side: right limits floor to µs, left limits use
+`ceil(µs) - 1`, then the same decoder guard applies. Consequently a left-limit
+request less than 499 µs before a PTS can still select that PTS.
+
+This removes former whole-ms media truncation and can change fractional-boundary
+selection, including VFR and reverse samples. `333` means literally 333 ms, not
+"source frame 10" for every codec or frame rate. At 30 fps it is close enough to
+frame 10 for the native guard; for VFR or arbitrary rates use the actual source
+presentation times. Do not add a blanket 5 ms bias to remap keys. Exact behavior
+of externally supplied/browser decoders remains the host decoder's contract.
 
 Inspect a preview to verify crop, orientation, and composition placement before
 adding overlays or exporting. If decoding fails, report the error and source format.
@@ -228,6 +270,24 @@ its `playback`:
 Place and animate the tag by its Group. The background follows the label when
 its text changes. Read the FX `layers` documentation (Group bounds, padding,
 and background) for gradient fills and nested Groups.
+
+A Group hugs its children's line height, not their letters: the room above
+capitals and below the baseline counts, so a small label over a large number
+comes out with more space below than above. Measure the letters instead of
+judging from thumbnails: the `fx.text-fit` and `fx.text-overlap` evaluate
+checks read each text's glyph outlines against its backdrop (its background
+Group, or a filled shape under it) over every frame. `overflow` means letters
+cross the backdrop's edge, `offCenter` gives the four margins when opposite
+sides differ, and `overlap` means two texts' letters intersect, including in
+the middle of a pop or slide. Fix every overflow and overlap; shift padding by
+the reported margins, or judge an offCenter against the design.
+
+```sh
+tsrct evaluate --project /absolute/path/edit/project.tsrct --checks fx.text-fit,fx.text-overlap
+```
+
+Add `--report fx.text-layout --time-ms <t>` for every text's letter box,
+backdrop and margins at one frame.
 
 
 ## Bottom captions

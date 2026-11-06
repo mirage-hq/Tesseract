@@ -44,7 +44,7 @@ Only one group may be open. Finish pending edits and close the group before savi
 
 ## Preview and selection
 
-`renderFrame(timeMs)` waits for resource decoding and rendering. Await it, coalesce rapid input, and schedule playback in the application. Browser GPU and media support are required. The runtime does not export video.
+`renderFrame(timeMs)` waits for resource decoding and rendering. Await it, coalesce rapid input, and schedule playback in the application. Browser GPU and media support are required. The runtime does not export video. Frames render at preview (Playback) quality — reduced internal resolution and simplified soft shadows — so playback stays interactive; use the CLI's `preview`, `filmstrip` or `export` for full-quality frames.
 
 `setMuted(boolean)` mutes preview output without changing the project or playback clock. Call `preloadAudio()` after loading resources. From the Play click handler, call `startPlayback(timeMs)` to start audio and resume the browser audio context. In your render loop, use `audioClockMs()` for the frame time, falling back to elapsed `performance.now()` time when it returns `undefined`. Call `stopPlayback()` on pause, before seeking, and at the document’s end. Rendering continues to be scheduled by the application. `pumpAudioScheduler()` is available for applications that also schedule audio while animation frames are throttled in background tabs.
 
