@@ -50,6 +50,14 @@ weights were converted to Burn's burnpack format. See `licenses/models/` for
 each model's license and source, and `provenance/models.json`. Their
 repositories have no NOTICE files.
 
+The `depthMatte` effect runs Depth Anything V2 Small, whose graph is compiled
+into Tesseract. It is licensed under the Apache License, Version 2.0. Its
+weights are not in the bundle: Tesseract downloads them from the Captions CDN,
+under `models/`, when a render first uses the effect. Tesseract runs a modified
+copy: the graph was converted to ONNX and then to Burn, and the weights to Burn's burnpack
+format. See `licenses/models/` for its license and source, and
+`provenance/models.json`. Its repository has no NOTICE file.
+
 `licenses/` also contains the available notices for each external Cargo package
 compiled for this build, including build tools. `provenance/cargo-dependencies.json`
 records license selections and versions; the corresponding package sources are

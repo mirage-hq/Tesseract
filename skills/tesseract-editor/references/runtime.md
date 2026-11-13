@@ -30,5 +30,5 @@ curl --fail --location https://captions-cdn.com/tesseract/<VERSION>/web_api.d.ts
 Use the same pinned version as the JavaScript and WASM. The declarations provide
 types and signatures; they are not needed to execute the JavaScript examples.
 
-Third-party notices for the same release are available at
-`https://captions-cdn.com/tesseract/<VERSION>/THIRD_PARTY_NOTICES.md`.
+The JavaScript includes third-party license notices for the browser runtime.
+Preserve those notices when copying or bundling it.

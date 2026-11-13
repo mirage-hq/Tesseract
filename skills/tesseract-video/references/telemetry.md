@@ -20,7 +20,7 @@ with CLI calls made through the skill:
 | Variable | Value |
 | --- | --- |
 | `TESSERACT_CALLER` | `agent-skill` |
-| `TESSERACT_SKILL` | `tesseract-motion` or `tesseract-video` |
+| `TESSERACT_SKILL` | `tesseract-video`, `tesseract-motion`, or `tesseract-3d` |
 | `TESSERACT_HOST` | `chatgpt`, `codex`, `claude`, or `cursor`, when known |
 | `TESSERACT_DISTRIBUTION` | `openai-plugin` or `standalone-skill`, when known |
 

@@ -58,7 +58,8 @@ New Video layers need `volume: 1.0` to enable embedded source audio at unity gai
 }
 ```
 
-Use the schema to check additional source metadata or per-channel features. Do not infer all audio effects of a DAW from the presence of an Audio layer.
+Use the schema to check additional source metadata or per-channel features.
+Do not infer all audio effects of a DAW from the presence of an Audio layer.
 
 `volume` is linear: unity is `1.0`; `0.5` is approximately −6 dB. Convert dB with `10 ** (dB / 20)`. A fixed value such as `0.2` is a starting point, not a calibrated mix target. Loud source material needs different gain.
 

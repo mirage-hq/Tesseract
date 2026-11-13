@@ -43,6 +43,10 @@ Scene contents are flat `scene: {items, data, materials}` tables. Objects carry 
 required nullable `parentId`; Mesh/Text/Model/Curve objects reference a `dataId`.
 Geometry and model assets belong to Data, while stable material slots belong to
 objects. Publish dependent Data and objects atomically with `addFxScene3DFragment`.
+References may name Data, parents or targets defined later in the same fragment;
+validation checks the complete candidate, not intermediate prefixes. `toIndex`
+positions the first object among its existing siblings; later objects append
+under their own parents in fragment order. Invalid fragments publish nothing.
 
 `styleProperty` addresses use the owning Scene3D `layerId`, the particular control's
 `itemId`, and an exact `propertyName`.
@@ -69,6 +73,18 @@ its authored cameras, so camera edits change nothing.
 Replacing the lens retains compatible channels; incompatible animation losses
 require explicit `pruneAnimation` consent, otherwise the edit rejects atomically.
 
+Destructive Scene3D edits take two independent consent flags.
+`pruneAnimation: true` authorizes only lost animation (tracks, keys,
+dependencies, property-source outputs, animation layers and masks, model
+pose-stack entries, and the unrebased keys of an animated binding the action
+retargets). `pruneStructure: true` authorizes only lost structure: items,
+camera selections, and references or bindings that other items hold, such as
+a camera's focus or a light's group. Retargeting a static binding the action
+addresses needs no flag. Neither implies the other; an edit that
+loses both needs both. What the action itself asks for (the item it removes and
+what that item owns, or what a replacement record drops of its own) needs no
+flag.
+
 ```json
 [
   {"type":"createFxScene3DLayer","compositionId":"main","layerId":1,"name":"Product scene","pixelsPerMeter":100,"view":{"id":9,"exposure":0},"activeRange":{"start":0,"duration":3000},"transform":{"anchorPoint":[0,0],"position":[0,0],"scale":[100,100],"rotation":0,"opacity":100},"world":{"id":2},"renderSettings":{"id":97,"filmGate":null,"overscan":null,"lightGroups":[],"lightCollections":[],"lightLinks":[],"outputs":[],"previewOutput":null}},
@@ -89,6 +105,11 @@ tsrct project inspect --project scene.tsrct --pretty > .tesseract-work/project.j
 tsrct preview --project scene.tsrct --time 1 --output scene.png
 tsrct filmstrip --project scene.tsrct --timestamps-ms 0,1000,2500 --output scene-filmstrip.png
 ```
+
+`setFxScene3DAim` accepts `aim.upSpace: "world" | "local"` to choose the
+space of its `up` vector on creation or update. Omitting `upSpace` preserves an
+existing Aim's space; a new Aim defaults to world space. Supply it explicitly
+when the same payload must have the same up-vector interpretation on any Aim.
 
 ## Model constraints and node selectors
 
@@ -175,6 +196,8 @@ tinting it (OpenPBR). Leave it unset to scatter with the base color. The
 packaged CLI's action schema does not expose `setFxScene3DMaterialInput`;
 inspect its material-edit actions before changing an existing input.
 
+`setFxPropertyValue` also edits 2D layer, effect and style targets.
+
 `setFxPropertyValue` changes the static base without detaching animation. Existing
 animation can still determine the sampled value. For style targets use
 `setFxAnimator` with an editable keyframe animator, as above. Preserve key IDs when
@@ -256,11 +279,16 @@ seeds, or animation of an inline material the array's per-copy paint replaces);
 other animated array controls reject. It cannot read Text3D or Model3D surfaces
 yet, so a scatter onto one, or paint on Model3D copies, rejects.
 
+Actions with an explicit `consent` field take `{"type":"reject"}`, an exact
+`{"type":"plan","digest":...}`, or `{"type":"losses","pruneAnimation":...,"pruneStructure":...}`
+with the same two categories.
+
 `removeFxScene3DLayer` removes the item/subtree with everything its objects own
 and prunes their animation and dependencies. It needs `pruneAnimation` only when
 it would drop animation (of the removed items or what they own, or
-animation-layer uses and masks naming them) or a reference a surviving item holds
-to them, such as a camera's focus; removing static content needs no flag.
+animation-layer uses and masks naming them), and `pruneStructure` only when it
+would drop a reference a surviving item holds to them, such as a camera's
+focus; removing static, unreferenced content needs no flag.
 Current removal is not uniformly reference-preserving: some references reject,
 others are cleaned up or can remain dangling. Inspect dependent items before
 removal; retain a backup. Whole-item `updateFxScene3DLayer` can also
@@ -321,7 +349,8 @@ Import assets before referencing their IDs:
 `tsrct project import-asset --project scene.tsrct --file bottle.blend --asset-id bottle --kind model3d`.
 You choose `--asset-id`; items then reference that ID. Images must be packaged
 as images (a Radiance `.hdr` is accepted for environments); Model3D uses
-`--kind model3d` with a binary glTF `.glb` or a Blender `.blend` (see
+`--kind model3d` with a glTF `.glb`, a `.gltf` (its buffers and images must be
+data URIs or files in its folder or below) or a Blender `.blend` (see
 [imported models](#imported-models)). IES photometry uses `--kind ies` and a
 prepared cloth point cache `--kind point-cache`. Arbitrary paths,
 network IDs and wrong-kind assets do not substitute for imports. Fonts use the
@@ -436,7 +465,16 @@ user's approval. `export --json` puts the failure's `code` on its error event:
   names the buffer and both sizes. Reducing copies or subdivision may help.
 - `scene3d_path_tracer_frame`: the path tracer could not finish the frame (its
   posed geometry could not be read back, a GPU round or the denoiser failed).
-  A retry may succeed.
+  A retry may succeed, and renders only the images the failed export did not
+  finish.
+
+Both renderers carry light as RGB, not as full spectra. Thin-film
+iridescence (`iridescence`) takes its colors from the film's reflectance
+integrated over the visible spectrum, so a thick film reflects neutrally
+rather than in false colors. Dispersive glass (`dispersion`) shows color
+fringes in both: the path tracer refracts each sampled wavelength by its
+own index, so its fringes are continuous rainbows; raster refracts each
+color channel by one index, so its fringes have three color edges.
 
 The path tracer renders like `raster`, except:
 
@@ -448,7 +486,7 @@ The path tracer renders like `raster`, except:
   through, and a prism does not throw a rainbow onto a wall; area lights and
   lights with a radius or disk reach through glass only along refracted paths;
 - a smooth slab shifts what is behind it along the refracted direction and,
-  when dispersive, shows color fringes; a rough slab does not shift it;
+  when dispersive, shows rainbow fringes; a rough slab does not shift it;
 - a blended caster shadows with its alpha, so a zero-opacity caster casts none;
 - material occlusion maps, reflection probes, the indirect-light grid and
   soft-shadow sample counts are ignored (the tracer computes these effects);
@@ -518,3 +556,25 @@ triangles and editable polygons. `tsrct evaluate --list` describes every report
 and check with its parameters.
 `project apply --dry-run` reports a batch, including what each mesh edit moves,
 without writing anything.
+
+### Judge a mesh's shape in clay
+
+While modeling or sculpting a Mesh3D, judge its form from clay views instead of
+authoring review cameras. This writes one PNG of labeled square tiles: mesh 5
+of Scene3D layer 1 at 1 s, alone, in one neutral gray, from orthographic front,
+side, top and three-quarter views that share one scale:
+
+```sh
+tsrct preview --project scene.tsrct --time 1 --output .tesseract-work/clay.png \
+  --clay scene3d:main:1/5
+```
+
+Views follow the Scene3D world axes: `front` looks along +Z (Blender Front,
+Numpad 1), `side` along -X (Blender Right, Numpad 3), `top` down along +Y
+(Blender Top, Numpad 7), and `three-quarter` looks down at the front, right
+side and top. `--views top,front` picks and orders tiles. The item keeps its
+modifiers, shape keys and animation at `--time`; its materials, the other items,
+cameras, lights and layer effects are ignored, so the result shows shape only.
+It accepts Mesh3D items of a top-level Scene3D layer and rejects any other
+target. Compare silhouettes across tiles and across edits, then check the real
+camera with an ordinary preview.
