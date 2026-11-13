@@ -18,8 +18,9 @@ For creating or restructuring layers, read [FX authoring](fx-authoring.md).
 For adding or revising animation, read [Motion](motion.md).
 
 Use editable FX compositions, text, shapes, media layers, effects, keyframes,
-and procedural scripts. Use existing local media. This CLI has no asset
-generation, transcription, dubbing, or cloud job tools.
+and procedural scripts. Use existing local media. The CLI authors and renders
+compositions locally. It does not call generative media models, transcription
+services, dubbing services, or cloud jobs.
 
 ## Project lifecycle
 
@@ -258,6 +259,11 @@ blocking steps of about 4 minutes or less, reading only the log's last line
 (`completed`, `total`, `etaSeconds`) between steps. Run one render at a time.
 Never split an export or lower its settings to fit a wait. Open or probe the
 output only after the command exits, and do not edit the document while it renders.
+Exports keep the finished Scene3D layer images that were slow to render in the user cache folder.
+After a failed or stopped export, run the same command again: it renders only the
+missing images. An export after an edit reuses every image the edit does not
+change, inside a Scene3D layer too: a keyframe edit renders only the frames whose
+scene it changes, and a held shot renders its image once.
 
 The `.tsrct` document is the portable editable source. Checked-out JSON becomes
 the saved source only through `project commit`; do not edit the ZIP manually.

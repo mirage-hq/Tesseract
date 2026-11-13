@@ -38,6 +38,7 @@ For speech that needs repair or tonal/level improvement, use [speech cleanup](sp
 
 The relative duck is a multiplier: −3 dB ≈ 0.708 and −6 dB ≈ 0.501. Apply it to the selected bed gain. A fader value of 0.2 does not mean the bed is a fixed number of dB below the voice; the input waveforms determine that relationship.
 
+
 ## A brief drop in density
 
 An 80–200 ms pause in music and background texture before a reveal can create contrast. Treat it as an option to audition, not a universal retention technique. Preserve any word or authentic sound carrying the meaning. If actual silence is intended, account for all audible layers and lingering tails; muting music alone may not create silence. Short 5–20 ms ramps can avoid clicks while still feeling abrupt. Let the reveal's cue/music return make the payoff legible.
@@ -48,6 +49,7 @@ An 80–200 ms pause in music and background texture before a reveal can create 
 - Reserve deep low end for the music's bass/kick or a selected impact, and avoid overlapping several bass-heavy effects. Do not depend on sub-bass for information a phone listener must hear.
 - Micro sounds can use upper-mid/high detail, often around 2–8 kHz, but brightness is not permission to boost everything above 5 kHz. Check sibilance and fatigue.
 - Center the narrative voice and keep essential cues audible in mono. Check headphones, low playback volume, and a phone when available. The helper's mono/band-limited preview is a diagnostic aid, not an exact device simulation.
+
 
 ## Loudness and delivery
 

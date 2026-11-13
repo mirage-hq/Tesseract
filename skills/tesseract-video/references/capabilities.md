@@ -41,9 +41,11 @@ that every requested combination renders correctly; inspect the actual result.
 - Canvas choices are listed in [local operation](local-operation.md). A bottom
   shape or the document's `backgroundColor` sets the background.
 - Native masks/mattes, effects, and supported 3D layer transforms are available
-  only as allowed by the installed schema and required local resources. Verify
-  person segmentation's model/resource availability and a real matte before
-  planning around it. Do not approximate a person with a hand-drawn silhouette.
+  only as allowed by the installed schema. `personMatte` and `depthMatte` run
+  local models that the CLI downloads and caches the first time a render uses
+  them, so that render needs network access; do not install models yourself. Check a real
+  matte frame before planning around it. Do not approximate a person with a
+  hand-drawn silhouette.
 - JS animation is not HTML/React rendering.
   3D transform properties tilt ordinary 2D layers; meshes, imported models,
   rigging and cloth are Scene3D items (see [Scene3D basics](scene3d-basics.md)).

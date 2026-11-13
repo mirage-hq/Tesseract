@@ -5,6 +5,10 @@ description: Create editable motion graphics locally in Tesseract, including ful
 
 # Design motion with Tesseract
 
+Create and render motion graphics using native layers and animation controls.
+Use generative tools when the composition needs synthesized media, while keeping
+directly authored elements editable.
+
 
 For converting files to or from other editing tools, such as Premiere Pro or After Effects, read [conversion](references/conversion.md). When opening shared or older `.tsrct` files, updating tools, or investigating load/render differences, read [versions and compatibility](references/versions.md).
 

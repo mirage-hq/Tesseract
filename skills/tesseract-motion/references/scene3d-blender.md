@@ -26,7 +26,7 @@ which approximation you used, or ask, rather than silently substituting.
 | --- | --- |
 | Cube, UV sphere, cylinder, cone, torus, plane | Mesh Data `geometry` `box`, `sphere`, `cylinder`, `cone`, `torus`, `plane`. Segment counts and an icosphere are not primitive options; author an `editable` mesh for faceted shapes. |
 | Edit-mode mesh | `editable` geometry (vertices, faces with a region per face); `editFxScene3DMesh` edits it; `makeFxScene3DMeshEditable` converts a primitive or curve-built mesh. |
-| Sculpt Mode (Grab, Smooth, Inflate, Draw) | An `editFxScene3DMesh` `sculpt` operation on an editable mesh: an ordered list of brush dabs with explicit centers, plus symmetry and a vertex mask. No other brushes and no dynamic topology; subdivide first for detail. Dry-run dabs with `tsrct mesh3d preview`. |
+| Sculpt Mode (Grab, Smooth, Inflate, Draw, Flatten) | An `editFxScene3DMesh` `sculpt` operation on an editable mesh: an ordered list of brush dabs with explicit centers, plus symmetry and a vertex mask. No other brushes and no dynamic topology; subdivide first for detail. Dry-run `meshEdits` requests with `tsrct project apply --dry-run`. Judge the shape like a clay viewport with `tsrct preview --clay` (front, right side, top and three-quarter views at one scale; see [Scene3D basics](scene3d-basics.md#judge-a-meshs-shape-in-clay)). |
 | Shade Smooth / Flat | Mesh `normalMode`. |
 | Curve with bevel, Screw, Loft | Mesh geometry `sweep` (along a `Curve3D` Data), `lathe`, `loft`, `extrude`. A `Curve3D` object itself does not render. |
 | Text object (extrude, bevel) | `Text3D` with front, back and side regions; per-character animators and selectors. |
