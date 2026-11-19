@@ -58,6 +58,8 @@ use a bottom FX shape layer for the background.
 
 `create(file)` retains the selected File/Blob and reads assets on demand. Embedded fonts are registered automatically. Missing assets or fonts fail locally; there is no network fallback. Asset references must point to packaged assets. The API preserves original assets but does not import new ones.
 
+`metadata()` returns the opened file's `metadata.json` as a plain object, including fields other tools add, such as a sync link. It describes the file as opened and does not change with edits.
+
 `toBlob()` captures the current document when called and asynchronously packages it with the original assets. It does not write to disk. Disable edits while saving, or track whether newer edits remain unsaved. Keep the source file available until the session and pending saves finish.
 
 For overwrite saving, obtain write permission, await `toBlob()`, write the Blob, and close the writable stream before reporting success. Overwriting can invalidate reads from the original File: reopen the saved Blob as the next engine session. Preserve the current edits on failure. The [timeline example](../examples/timeline-editor/README.md) demonstrates this flow.

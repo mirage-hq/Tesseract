@@ -12,6 +12,8 @@ The CLI may send basic usage telemetry for some commands. You can provide option
 
 Make a deliberate edit from the user's material. Tesseract is the local editing and rendering engine; the agent supplies editorial judgment. The output is both a playable video and its editable project.
 
+Do in Tesseract everything Tesseract can do, and keep the result native and editable. When it cannot do something, say so, propose the closest native approach, and use another tool only if the user asks for it.
+
 ## Start with the material
 
 Resolve this skill's root from the directory containing this `SKILL.md`. Read [CLI installation](references/installation.md) and check the required Tesseract version once per session. Use the resolved executable path throughout the task. Scripts and references are relative to the installed skill, not a guessed home directory or development checkout.
@@ -81,4 +83,4 @@ checks, the critics' final scores, and any limitations.
 Use absolute local file links and show the video inline
 when supported. Cloud sync and publishing are not implemented.
 
-If the host cannot execute local commands or access the local GPU/filesystem, explain that this package needs a local execution environment. Do not substitute a hosted service or silently switch rendering engines.
+If the host cannot execute local commands or access the local GPU/filesystem, explain that this package needs a local execution environment. Do not substitute a hosted service or another rendering engine.

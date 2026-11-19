@@ -120,6 +120,10 @@ and an `aimAxis`, while `twoBoneIk` selects `tip` and optionally `mid` and `root
 Both take a `target` binding (for example a world target with an `offset` and
 `offsetSpace: "world"`). IK optionally takes a `pole` binding and
 `keepTipRotation`; `influence` blends the result from 0 to 1.
+A static model gets joints first with a `prepareScene3dModelRig` request to `tsrct project prepare`;
+the [character recipe](scene3d-recipes.md#8-rig-a-static-character-and-place-its-hand-with-ik)
+rigs a body and keys an arm's IK onto its own chest joint, named by its key in
+the preparation output's `importManifest`.
 
 These numeric selectors are **zero-based glTF node indices in the model asset**,
 not the IDs in the object's `nodes` overrides, nor positions in a skin's `joints`
@@ -334,7 +338,7 @@ tsrct preview --project scene.tsrct --time 1 --output removed.png
 Use `project checkout --project scene.tsrct --output editable.json`, edit the
 canonical document without discarding unrelated fields, then
 `project commit --project scene.tsrct --file editable.json`. Document-level edits
-are useful for canvas/duration and blocks without scoped actions. Start from the
+are useful for blocks without scoped actions. Start from the
 checked-out Scene3D JSON rather than a schema; commit validates it. Reload and inspect after commit;
 valid JSON alone does not prove the intended picture. Saved JSON omits fields
 that equal their default (for example `bevelSegments` 3), so a value you
@@ -489,7 +493,9 @@ The path tracer renders like `raster`, except:
   when dispersive, shows rainbow fringes; a rough slab does not shift it;
 - a blended caster shadows with its alpha, so a zero-opacity caster casts none;
 - material occlusion maps, reflection probes, the indirect-light grid and
-  soft-shadow sample counts are ignored (the tracer computes these effects);
+  soft-shadow sample counts are ignored (the tracer computes these effects).
+  `ReflectionProbe3D` and `IrradianceVolume3D` are deprecated: do not author
+  new ones; existing projects still load and render as before;
 - a light-group output includes the indirect light of its lights.
 
 Rendered alpha is coverage: glass over a transparent background is opaque
@@ -509,8 +515,12 @@ continuity. Sparse filmstrips do not prove playback smoothness or platform parit
 
 `project inspect` prints the stored document JSON. Evaluated positions come from
 `tsrct evaluate` (below). Resource preparation (model replacement, rigging, clip
-bake, cloth bake) is requested inside `project apply`. Scene3D action and request
-fields follow the examples here and `project schema`; report missing operations
+bake, cloth bake) is one request to `tsrct project prepare`, which never writes the
+project: it writes the frozen action (`actions.json`) and any new assets with their
+manifest (`assets.json`) to a new directory, for `tsrct project apply --actions
+DIR/actions.json --assets DIR/assets.json`. A prepared action is rejected once the
+project changed after preparing; prepare again. Scene3D action fields follow the
+examples here and `project schema`, request fields `project schema --requests`; report missing operations
 rather than guessing command names.
 
 ### Run placement checks
@@ -552,10 +562,19 @@ passing the camera in a fly-through. Motion can flag intentionally fast
 entrances, spins or near-camera objects; inspect the sampled filmstrip and, when
 appropriate, check the settled interval separately. Explain any findings left
 unfixed. `scene3d.mesh` and `scene3d.topology` measure a Mesh3D's drawn
-triangles and editable polygons. `tsrct evaluate --list` describes every report
+triangles and editable polygons. After grab, draw or inflate dabs, check
+`scene3d.mesh`'s `surfaceIntersections`: one entry per fold, with a `point`
+on the crossing and its `bounds` (local pixels) and, for an editable mesh,
+the `faces` involved. Crossings through one large triangle count as one
+fold, so check its `bounds` as well as its point. The mesh stays closed, so
+nothing else reports the fold; smooth at the point or take the dab back until the list is empty. `tsrct evaluate --list` describes every report
 and check with its parameters.
 `project apply --dry-run` reports a batch, including what each mesh edit moves,
-without writing anything.
+without writing anything. Each `meshEdits` entry's `normals` says how the faces
+around the moved vertices turned, in degrees: a dab that leaves
+`sharpestEdge.after` far above `before` made a spike or crease (smooth at its
+`point`), and `flippedFaces` lists faces folded over. A corrective shape key
+reports no `normals`.
 
 ### Judge a mesh's shape in clay
 
@@ -573,8 +592,9 @@ Views follow the Scene3D world axes: `front` looks along +Z (Blender Front,
 Numpad 1), `side` along -X (Blender Right, Numpad 3), `top` down along +Y
 (Blender Top, Numpad 7), and `three-quarter` looks down at the front, right
 side and top. `--views top,front` picks and orders tiles. The item keeps its
-modifiers, shape keys and animation at `--time`; its materials, the other items,
-cameras, lights and layer effects are ignored, so the result shows shape only.
+modifiers, shape keys and animation at `--time`; its materials and vertex colors,
+the other items, cameras, lights and layer effects are ignored, so the result
+shows shape only.
 It accepts Mesh3D items of a top-level Scene3D layer and rejects any other
 target. Compare silhouettes across tiles and across edits, then check the real
 camera with an ordinary preview.

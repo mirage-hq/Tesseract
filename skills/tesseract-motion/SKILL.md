@@ -9,6 +9,8 @@ Create and render motion graphics using native layers and animation controls.
 Use generative tools when the composition needs synthesized media, while keeping
 directly authored elements editable.
 
+Do in Tesseract everything Tesseract can do, and keep the result native and editable. When it cannot do something, say so, propose the closest native approach, and use another tool only if the user asks for it.
+
 
 For converting files to or from other editing tools, such as Premiere Pro or After Effects, read [conversion](references/conversion.md). When opening shared or older `.tsrct` files, updating tools, or investigating load/render differences, read [versions and compatibility](references/versions.md).
 

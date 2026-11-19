@@ -1,0 +1,6 @@
+interface:
+  display_name: "Tesseract: Audio"
+  short_description: "Compose, arrange and mix audio with Tesseract"
+  icon_small: "./assets/icon.png"
+  icon_large: "./assets/icon.png"
+  default_prompt: "Use $tesseract-audio to compose and mix a track, then render and measure it."

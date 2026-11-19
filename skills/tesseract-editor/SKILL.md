@@ -9,6 +9,8 @@ If the editor needs to import or export other tools’ project formats, such as 
 
 The browser engine opens, previews, edits, and saves `.tsrct` projects locally. A static HTML application is sufficient; no backend or native CLI is required. The browser runtime does not export video.
 
+Do in this runtime everything it can do: open, preview, edit, and save documents through it. When the runtime cannot do something, say so, propose the closest supported approach, and use another tool only if the user asks for it.
+
 The [browser API reference](references/browser-api.md) covers initialization, actions, playback, and saving. Example: [general layer controls](examples/timeline-editor/README.md).
 
 ## Runtime and serving

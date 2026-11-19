@@ -26,7 +26,8 @@ which approximation you used, or ask, rather than silently substituting.
 | --- | --- |
 | Cube, UV sphere, cylinder, cone, torus, plane | Mesh Data `geometry` `box`, `sphere`, `cylinder`, `cone`, `torus`, `plane`. Segment counts and an icosphere are not primitive options; author an `editable` mesh for faceted shapes. |
 | Edit-mode mesh | `editable` geometry (vertices, faces with a region per face); `editFxScene3DMesh` edits it; `makeFxScene3DMeshEditable` converts a primitive or curve-built mesh. |
-| Sculpt Mode (Grab, Smooth, Inflate, Draw, Flatten) | An `editFxScene3DMesh` `sculpt` operation on an editable mesh: an ordered list of brush dabs with explicit centers, plus symmetry and a vertex mask. No other brushes and no dynamic topology; subdivide first for detail. Dry-run `meshEdits` requests with `tsrct project apply --dry-run`. Judge the shape like a clay viewport with `tsrct preview --clay` (front, right side, top and three-quarter views at one scale; see [Scene3D basics](scene3d-basics.md#judge-a-meshs-shape-in-clay)). |
+| Select All, Box Select, Circle Select | A spatial volume in `within` instead of index lists: in a `translate`, `rotate`, `scale` or vertex-group `selection`, a sculpt `mask`, or `subdivideFaces` / `deleteFaces`. `{"type":"all"}`, `box` (`min`, `max`), `sphere` (`center`, `radius`) or `halfSpace` (`point`, `normal`), in mesh-local pixels, boundary included, added to any listed indices. A face counts when all its corners are inside. Volumes are 3-D, not drawn through the view, so a box also selects hidden back faces. |
+| Sculpt Mode (Grab, Smooth, Inflate, Draw, Flatten) | An `editFxScene3DMesh` `sculpt` operation on an editable mesh: an ordered list of brush dabs with explicit centers, plus symmetry and a vertex mask (indices, faces or a spatial volume in `within`, which fully masks the vertices inside). No other brushes and no dynamic topology; subdivide first for detail. Dry-run requests with `tsrct project apply --dry-run`: `meshEdits` lists the moved vertices and how the faces turned (`normals`: a spike shows as a much sharper `sharpestEdge`). Judge the shape like a clay viewport with `tsrct preview --clay` (front, right side, top and three-quarter views at one scale; see [Scene3D basics](scene3d-basics.md#judge-a-meshs-shape-in-clay)). Find folds pushed through the surface (the 3D-Print Toolbox's Intersections check) in `tsrct evaluate --report scene3d.mesh`'s `surfaceIntersections`: one entry per fold, with a point to smooth and the editable faces. |
 | Shade Smooth / Flat | Mesh `normalMode`. |
 | Curve with bevel, Screw, Loft | Mesh geometry `sweep` (along a `Curve3D` Data), `lathe`, `loft`, `extrude`. A `Curve3D` object itself does not render. |
 | Text object (extrude, bevel) | `Text3D` with front, back and side regions; per-character animators and selectors. |
@@ -35,7 +36,7 @@ which approximation you used, or ask, rather than silently substituting.
 | Subdivision Surface | `smoothSubdivide` is Loop subdivision, not Catmull–Clark; `subdivide` splits without smoothing. Quads come out slightly different from Blender. |
 | Geometry Nodes scatter (Distribute Points / Instance on Points) | `Group3D.array` `scatter` on a mesh, text or model target with a seed. Other node trees have no equivalent. |
 | Shape keys | Editable-mesh shape keys, or a model's morph controls (listed in `poseStack`). |
-| Cloth | `cloth` modifier on an editable Mesh3D, baked with the `prepareScene3dCloth` apply request. A `.blend` cloth modifier is not imported. |
+| Cloth | `cloth` modifier on an editable Mesh3D, baked with the `prepareScene3dCloth` request (`tsrct project prepare`, then `project apply`). A `.blend` cloth modifier is not imported. |
 
 ## Materials and lighting
 
@@ -50,7 +51,7 @@ which approximation you used, or ask, rather than silently substituting.
 | Light linking, shadow linking | `setFxScene3DLightLinks` (illuminated objects, shadow casters and receivers). |
 | Exposure (Color Management) | The layer `view.exposure` plus the active camera's `exposure`, in stops. |
 | Volume Scatter, Mist | `Volume3D` objects (with world lighting set to `integration: "sampled"`) and world fog distances in metres. |
-| Eevee Reflection Cubemap, Irradiance Volume | `ReflectionProbe3D`, `IrradianceVolume3D` (raster only; the path tracer computes these effects). |
+| Eevee Reflection Cubemap, Irradiance Volume | Do not author them. `ReflectionProbe3D` and `IrradianceVolume3D` are deprecated: the path tracer ignores them because it traces reflections and bounced light itself. Render with the path tracer for local reflections and bounce light. Existing projects that contain them still load and render as before. |
 | Bloom / Glare | A Glow effect on the Scene3D layer in the composition. |
 
 ## Cameras and rendering
@@ -61,7 +62,7 @@ which approximation you used, or ask, rather than silently substituting.
 | Shift X/Y | `lensShift`. |
 | Tilt-shift look | `setFxScene3DTiltShift` (a real tilted focus plane). |
 | Track To / Damped Track | `setFxScene3DAim`. |
-| Child Of, Copy Location/Rotation | An `attachment` constraint in the object's `relationships` (`setFxScene3DAttachmentBinding` rebinds an existing one), `setFxScene3DFollowTarget`, space switches (`prepareScene3dSpaceSwitch` apply request). |
+| Child Of, Copy Location/Rotation | An `attachment` constraint in the object's `relationships` (`setFxScene3DAttachmentBinding` rebinds an existing one), `setFxScene3DFollowTarget`, space switches (`prepareScene3dSpaceSwitch` prepare request). |
 | Follow Path | `setFxScene3DFollowPath` with a `Curve3D` and animated `progress`. |
 | Cycles | `--renderer path-tracer`, `--samples`, bounce flags, `--no-denoise`; a command flag, not saved in the document. |
 | Eevee | The default `raster` renderer; browser and iOS playback always use it. |
@@ -75,9 +76,11 @@ which approximation you used, or ask, rather than silently substituting.
 | Armature, skinning, Actions | Import a `.blend` or `.glb` (`import-asset --kind model3d`); bind clips on the Model3D and list them in `poseStack`. Skins keep four influences per vertex. |
 | NLA strips, action blending | Model `blend` clip with `blendWeight`, or ordered animation layers and masks (`addFxScene3DAnimationLayer`, `addFxScene3DAnimationMask`). |
 | Pose-mode bone keys | Model `nodes` overrides listed as `localTransform` entries in `poseStack`. |
-| IK, bone Track To | Model `constraints` `twoBoneIk`, `lookAt`, `transform`. |
+| Rigify metarig, Parent with Automatic Weights | `prepareScene3dModelRig` prepare request on a static Model3D: a biped template fitted to landmarks (optionally with fingers, a jaw and eyes, and a spine joint count), with generated smooth weights; see the [character recipe](scene3d-recipes.md#8-rig-a-static-character-and-place-its-hand-with-ik). |
+| IK, bone Track To | Model `constraints` `twoBoneIk`, `lookAt`, `transform`; targets and poles can be the same model's nodes (`modelNode`). |
+| Bone Limit Rotation, Limit Location, Damped Track, Stretch To | Not available yet; a `.blend` import keeps the bones' own transforms and lists each such constraint in `conversion.diagnostics`. |
 | Root motion | Clip `rootMotion` (`source`, `inPlace`, `accumulate`). |
-| Bake Action | `prepareScene3dModelBake` apply request. |
+| Bake Action | `prepareScene3dModelBake` prepare request. |
 | Graph Editor curves | Keyframe `easing` per key; see `project schema` for the easing kinds. |
 
 ## What a `.blend` import keeps

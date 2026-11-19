@@ -35,17 +35,26 @@ This plugin has **no bundled dedicated dereverberation or speech-isolation model
 
 Compare a moderate treatment before increasing strength. Check phrase endings, quiet consonants, natural breaths, and voice texture. Back off if it sounds metallic, watery, phasey, or syllables disappear. For a badly reverberant recording, report the remaining limitation honestly; improved intelligibility is a useful result even when the room cannot be fully removed. Missing words and a clean studio recording cannot be guaranteed from damaged source audio.
 
-## Apply locally and preserve timing
+## Apply natively, and locally where needed
 
-Tesseract's native controls are source/active ranges, gain, and gain envelopes. EQ, compression, denoising, and de-essing use a **new local audio derivative**, not invented Tesseract DSP fields. Inspect installed filter options with `ffmpeg -h filter=<name>` before using them. In particular, `acompressor` threshold/makeup use linear amplitude and attack/release use milliseconds; FFmpeg `deesser`'s `f` parameter is normalized, not a frequency in Hz.
+Process the dialogue natively. Insert effects on its Audio or Video layer, or on its track, run in order before the owner's gain and pan, keep the timing, and stay editable. Read the [DAW mixer](daw-mixer.md) reference and take exact fields from the action schema. The treatments above map to these effects:
 
-This optional example auditions gentle rumble/boxiness reduction and compression on an **already aligned dialogue-only WAV**. Choose its settings from the actual recording, or omit unnecessary filters:
+| Treatment | Native effect |
+|---|---|
+| Rumble or handling noise | `eq` with a `lowCut` band around 60–90 Hz |
+| Steady hiss, fan noise or hum | `noiseReduction` first in the chain, its `profileDb` learned from a speech-free stretch (below). With a learned profile its default 24 dB of `reductionDb` replaces the restrained 3–6 dB start above; lower it to keep more of the room |
+| Plosive pops | `plosiveRemover`; raise `frequencyHz` for pops near the voice's own low end |
+| Mud, boxiness or harshness | `eq` bell cuts at the resonance you found |
+| Uneven level | gain automation for phrase rides, then `compressor` with `"detection": "rms"` around 2:1–3:1 |
+| Sharp “s” and “sh” sounds | `deEsser` with `frequencyHz` at the sibilant region and a few dB of `reductionDb` |
+| Noise between phrases | `gate` with a shallow `rangeDb`, not a hard gate |
+| Peaks | a final `limiter` |
 
-```bash
-ffmpeg -nostdin -n -i /absolute/path/edit/dialogue-aligned.wav -map 0:a:0 -vn -af "highpass=f=70:p=2,equalizer=f=300:t=q:w=1:g=-2,acompressor=threshold=0.125:ratio=2:attack=15:release=150:makeup=1" -ar 48000 -c:a pcm_s24le /absolute/path/edit/dialogue-clean-v1.wav
-```
+The `podcast-voice` preset adds a starting chain of EQ, compressor and limiter; lower its compressor threshold for a quiet recording. `plosiveRemover`, `noiseReduction` and lookahead settings add latency, so check lip sync in the export.
 
-`threshold=0.125` is approximately −18 dBFS and may be inappropriate for another input level. This example performs no de-reverb, loudness normalization, or true-peak limiting. For steady noise, the locally available `afftdn` can be auditioned separately with modest `nr` and a noise floor derived from the recording; do not call its defaults a universal cleanup preset. Its noise-only output mode can help reveal whether removed material includes words.
+`noiseReduction` needs the noise's profile. Find a stretch of at least half a second where only the noise plays (room tone before the first word or in a pause, with no breath or echo of a word), add the effect, then measure the profile into it with `tsrct learn-noise --project <file> --effect <effect id> --start-ms <start> --duration-ms <length>`. Compare a few pauses' spectra first and pick the most typical one: the effect cuts only what stays below its profile, so a breath learned as noise takes voice with it. Until its profile is learned it cuts next to nothing. There is no native dereverberation.
+
+Measure with `export-audio --stems <dir> --report <file.json> --spectrogram <file.png>`: the dialogue stem's band levels show rumble (sub) and sibilance (high), its short-term loudness shows the leveling, and the spectrogram shows hum lines and plosive thumps. A document with mixer effects may not open in a later CLI build; deliver the rendered audio with it.
 
 Keep the original file and record the selected stream/channel, processing recipe, source range, and mapping to project time. Favor processing continuous dialogue takes before trimming into many short clips; independent per-clip processing can create changing noise floors and processor transients. If processing an excerpt, include handles and record its offset.
 

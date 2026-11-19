@@ -28,8 +28,8 @@ Import each distinct local video once. Select cuts
 using Video layers: a clip from source 2.2–5.7s placed at edit 0–3.5s has
 `sourceRange: {start: 2200, duration: 3500}` and a windowed
 `playback` with `inputRange: {start: 0, duration: 3500}` and
-`inputOffsetMs: 2200` at composition root (Video/Audio/Group use `playback`,
-never `activeRange`; see the footage example in fx-authoring). Set
+`inputOffsetMs: 2200` at composition root (in document JSON, Video/Audio/Group
+use `playback`, never `activeRange`). Set
 `sourceIntrinsicDuration` to the actual full source duration returned by import.
 Set `volume: 1.0` on new Video layers to enable embedded source audio; an
 omitted/null volume disables it. Preserve existing gain on revisions unless

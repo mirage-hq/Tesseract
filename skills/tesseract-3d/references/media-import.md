@@ -26,13 +26,12 @@ files, and `--kind lut` for LUTs.
 A 3D-enabled CLI also imports models, IES photometry, cloth point caches and
 HDR environment images; [Scene3D basics](scene3d-basics.md) lists the kinds.
 
-After import, add an Image or Audio layer to the document JSON using the
-installed document schema and the imported asset ID.
-Check out the document first and commit it afterwards.
-Preserve existing layers and use unused numeric layer IDs. For a 200×100 image:
+After import, add an Image or Audio layer using the imported asset ID.
+Apply it with `project apply`.
+Use unused numeric layer IDs. For a 200×100 image:
 
 ```json
-{"type":"Image","id":1,"name":"Logo","activeRange":{"start":0,"duration":3000},"transform":{"anchorPoint":[100,50],"position":[320,180],"scale":[100,100],"rotation":0,"opacity":100},"source":{"assetId":"logo","fit":"contain"}}
+[{"type":"createFxImageLayer","compositionId":"main","layerId":1,"name":"Logo","activeRange":{"start":0,"duration":3000},"transform":{"anchorPoint":[100,50],"position":[320,180],"scale":[100,100],"rotation":0,"opacity":100},"source":{"assetId":"logo","fit":"contain"}}]
 ```
 
 Use actual image dimensions for the anchor and choose placement for the canvas.

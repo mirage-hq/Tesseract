@@ -7,8 +7,7 @@ Sound helps establish rhythm, direct attention, and make the edit feel intention
 When making a new edit or when asked to improve its sound, add appropriate local sounds without asking for each cue. Use the user's supplied audio, meaningful production sound from the footage, an available local sound library cleared for the project, or this plugin's procedural accents. Preserve an explicitly chosen track and obey requests for silence or a clean dialogue-only edit. A narrow visual revision does not authorize restyling the whole mix.
 
 The sound helper offers eight procedural accents. List them with `python3 <skill-root>/scripts/tesseract_sound.py list` and use `make` to generate a WAV with the desired duration, seed, or level locally. These are synthesized design accents, not recordings of the actual product. Do not imply that a synthetic click is factual evidence of how something sounds. For documentary/product claims, prefer authentic source sound.
-
-Import selected supplied or generated files as audio, then use separate native Audio layers and keep source/gain/timing traceable. Follow [audio and timing](audio-and-timing.md) for placement and mixing. Do not bake all sound into a replacement video or change the source footage. The local-only plugin does not contact a music, voice, or sound-generation service. If a bespoke soundtrack is essential and no suitable local track exists, identify that missing input; do not invent narration or silently replace the user's music.
+Import selected supplied or generated files as audio, then use separate native Audio layers, or audio clips on tracks, and keep source/gain/timing traceable. Follow [audio and timing](audio-and-timing.md) for placement and mixing. Do not bake all sound into a replacement video or change the source footage. You can compose an original bed from MIDI tracks and instruments, as described in [DAW MIDI](daw-midi.md); the Tesseract: Audio skill covers composing and mixing one. Do not invent narration or silently replace the user's music. Clean up the sources that need it with mixer effects such as `noiseReduction`, `plosiveRemover`, `deEsser`, `compressor` and `eq`.
 
 For an ad opening, follow [ad hooks](ad-hooks.md) to map the chosen visual event to the music and a motivated sound accent. Align perceptual arrivals/transients, preserve speech, and use the existing music hit alone when it already provides the impact.
 
@@ -38,6 +37,21 @@ For speech that needs repair or tonal/level improvement, use [speech cleanup](sp
 
 The relative duck is a multiplier: −3 dB ≈ 0.708 and −6 dB ≈ 0.501. Apply it to the selected bed gain. A fader value of 0.2 does not mean the bed is a fixed number of dB below the voice; the input waveforms determine that relationship.
 
+## Sync to the music's tempo
+
+Detect a supplied song's tempo, set it on the composition, and confirm it against the audio:
+
+1. Detect it with `tsrct detect-tempo --input <song file>`, before or after the song is placed, or `tsrct detect-tempo --project <file> --layer <id>` for the whole source of an Audio layer or an audio clip on a track. It prints JSON with times in the file's milliseconds:
+   - `bpm` counts quarter notes, as the tempo map does, and `timeSignature` is 4/4, 3/4, 6/8 or 12/8.
+   - `beatsMs` are the beats a listener taps (dotted quarters in 6/8), and `firstDownbeatMs` is where the first bar starts.
+   - `tempos` are the tempo map's steps from that downbeat: one for a steady song, more where the tempo steps or drifts.
+   - The strongest pulse is often another metrical level of the beat, so `alternatives` lists half, double, ⅔ and 3⁄2 time with a `score` against the detected tempo's 1. When one scores close, choose the level the genre is written at (drum and bass near 170 BPM, not 85) and say which you chose.
+   - A `confidence` below about 0.2 means the onsets barely repeat (rubato, sparse or ambient audio); listen if you can. In dense or syncopated music the first downbeat can land on another beat of the bar; step 3 checks it.
+
+   `export-audio --report` gives the same `tempo` for every bus over the exported range, on the timeline, with each composition bus's `anchorMs`.
+2. Set it with `setFxCompositionTempo`: the `tempos` and the `timeSignature` (for an alternative, multiply each step's `bpm` by its `ratio`). Tick 0 sits at the tempo map's `anchorMs`: set `composition.tempo.anchorMs` to the composition time of the first downbeat, through checkout and commit. For a song clip starting at composition time `start` and playing its source from `sourceStart` at normal speed, that is `start + firstDownbeatMs − sourceStart`; the report's `anchorMs` is already in composition time. MIDI clips move with the anchor, so check that the document's `duration` still covers them. To make a supplied loop or song follow the tempo map instead, put it on an audio track as a clip and give the clip a `sourceTempo` of the detected `bpm` and `firstBeatMs: firstDownbeatMs` from `detect-tempo --project --layer`; an Audio layer cannot follow the tempo map ([tempo-following audio clips](daw-tracks.md#tempo-following-audio-clips)).
+3. Confirm with `export-audio --spectrogram <file.png>` over a few bars near the start and again near the end (`--start-ms`, `--duration-ms`). The spectrogram draws a line at every bar and beat, so the song's kicks and snares should sit on them in both windows. Hits that fall progressively later than the lines mean the BPM is set too high, and earlier, too low; a whole beat off the bar lines means the downbeat is on another beat. Adjust and render again. The report's per-bar levels use the same bars.
+4. Place visual changes on the grid. A beat is the time signature's denominator note, so beat *n* after the anchor falls at `anchorMs + n × 60000 / bpm × 4 / denominator` milliseconds: every quarter note in 4/4, every eighth in 6/8. For a live recording whose tempo drifts, use the detected `beatsMs` instead. Start motion before a beat so its arrival lands on it, pick a few meaningful beats rather than every one, and check the frames at those times with a filmstrip.
 
 ## A brief drop in density
 
@@ -50,6 +64,11 @@ An 80–200 ms pause in music and background texture before a reveal can create 
 - Micro sounds can use upper-mid/high detail, often around 2–8 kHz, but brightness is not permission to boost everything above 5 kHz. Check sibilance and fatigue.
 - Center the narrative voice and keep essential cues audible in mono. Check headphones, low playback volume, and a phone when available. The helper's mono/band-limited preview is a diagnostic aid, not an exact device simulation.
 
+## Spatial audio for headphones
+
+A `binaural` effect places a source around the listener's head ("3D" or "8D" audio). It only works on headphones or a proper sound system: tell the user, and say that normal laptop or smartphone speakers lose the placement, listen on headphones or proper studio monitors. Read the [DAW mixer](daw-mixer.md) and [DAW automation](daw-automation.md) references. Put the effect last in the source's chain, leave its pan centred, and automate `azimuthDegrees`, `elevationDegrees` and `distanceMeters` to move it. For a source that rushes towards or past the listener, such as a passing car, a fly-by or a whoosh around the head, set `doppler` (1 is physical, the default 0 is off) so its distance curve bends the pitch, higher as it comes and lower as it leaves. The sound is then late by the time sound takes to travel, and on time only at the nearest distance its automation reaches. Spatialize the sources the piece is about, such as a passing sound effect or an orbiting voice, and keep the bass and the main voice ahead.
+
+To match an object in a [Scene3D](scene3d-basics.md) layer, place its sound where the camera sees it. Put the effect on the sound's own Audio layer or clip, whose keys are milliseconds on its own clock (a track's, and a tempo-following clip's, are ticks), and key it at the object's keyframe times. At each, take the object's position minus the listener's (the camera, or a head centre just behind it) in the camera's frame, which for an unrotated camera are Scene3D's own axes (X right, Y down, Z ahead), divided by `pixelsPerMeter`. Then azimuth is `atan2(x, z)` and elevation `atan2(−y, √(x² + z²))`, both in degrees, and distance `√(x² + y² + z²)` metres. Unwrap the azimuth so it keeps turning past ±180° instead of jumping back. With `doppler`, sound and picture meet at the object's closest pass, so time that moment to the picture.
 
 ## Loudness and delivery
 

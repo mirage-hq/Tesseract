@@ -20,6 +20,17 @@ native cameras and lights following its nodes and sampled camera/light keys.
 one direction only; consult the Blender support ledger before relying on fidelity.
 The source frame rate stays in model metadata; project exports choose their own rate.
 
+For glTF 2.0 `.gltf`/`.glb`, use
+`tsrct-conv convert scene.gltf --to tesseract --output converted`.
+Geometry, skins and morphs stay in a canonical model; materials and variants are
+editable Scene3D records, with node-attached cameras/lights. Options:
+`--scene INDEX`, `--canvas WxH`, `--pixels-per-meter N`,
+`--clip NAME|INDEX|none`, `--duration-ms N`, and
+`--lighting-mode standard|unitless|raw`. `inspect scene.glb` lists scenes.
+External resources must be inside the source directory. Re-export Draco/meshopt
+or KTX2 without compression; WebP is decoded to PNG. This route is import-only;
+render fidelity is unmeasured. Consult `docs/gltf-support.md` in the converter.
+
 Conversions may omit or approximate features, so the result can look or behave
 differently from the source. Use conversion diagnostics and the repository’s
 support documentation to understand those differences. A later converter release
