@@ -1,0 +1,306 @@
+# FX authoring
+
+Inspect the document for existing content. Exact fields come from the installed
+action schema, or the document schema for editable JSON.
+Use `project inspect`, `project schema`, and `project schema --document`.
+
+## Document color management
+
+Set `colorManagement` on the document root, not on a composition or layer.
+Omitting it uses `legacyDisplay`. For ACES setup, compositing presets, layer
+`renderDomain` overrides, and highlight finishing with `halation`, read
+[color grading](color-grading.md#aces-scene-referred-color-management).
+
+## Structure, placement, and resources
+
+- The document owns one composition starting at time zero.
+  Its root `duration` is seconds.
+  Layer windows use milliseconds: Video/Audio/Group use
+  `playback.inputRange` on the immediate parent clock; other kinds use
+  `activeRange`. Keep document and ancestor windows long enough.
+- Layer IDs are integers unique within a composition. Choose unused IDs after
+  inspection; preserve IDs when editing. Names describe visible roles.
+- Sibling index zero is frontmost. Create actions append behind siblings when
+  `insertIndex` is omitted; use `insertIndex: 0` for a foreground insertion.
+- `position` is in parent coordinates; `anchorPoint` is in layer-local coordinates.
+  Scale and opacity use percentages (100 is unchanged/opaque). Authored paint RGB is finite encoded extended-sRGB in 0–64; alpha remains 0–1 (see [paint colors above 1](#paint-colors-above-1)). Native Adobe exports clip RGB to 1 with diagnostics; see `native-authoring.md`.
+  Read the project's canvas dimensions rather than treating source pixels as
+  composition coordinates. Parent transforms also affect children.
+- `sourceRange` selects media time independently of `playback.inputRange`.
+  In document JSON, Video/Audio/Group require windowed `playback` with an
+  authored `mapping` and `inputOffsetMs`; do not also supply `activeRange`.
+  Moving a visibility window
+  and changing its content clock are different operations.
+- Keyframe `layerTime` on a windowed Video/Audio is its playback input clock:
+  parent time minus `mapping.input.start`, plus `inputOffsetMs`, at unit rate.
+  The mapping's output and rate select source frames only; they do not move
+  keys. With `mapping.input.start` equal to `inputRange.start`, the first
+  visible frame is at `layerTime` equal to `inputOffsetMs` (0 when it is 0),
+  wherever the clip starts in the source. On a windowed Group, `layerTime` is
+  the mapped `playback` output, its content clock. Layer time is clamped to the
+  visible window. To animate from the moment a clip appears regardless of its
+  `inputOffsetMs`, wrap it in a Group and animate the Group.
+- Import local footage before referencing its asset ID.
+  An arbitrary path or asset ID in an action does not import its bytes.
+  Import audio/images through [media import](media-import.md); package fonts as below.
+
+## Local footage
+
+Package supplied footage first; import saves the video bytes inside the
+project without modifying the source file.
+
+```sh
+tsrct project import-video --project project.tsrct \
+  --file /path/to/clip.mp4 --asset-id footage-1
+```
+
+Use a new ID containing letters, numbers, hyphens, or underscores. Existing IDs
+are rejected to avoid replacing another layer's media. The JSON response reports
+`assetId`, `durationMs`, `width`, `height` (display orientation), and `hdrTransfer`
+(`"hlg"`, `"pq"`, or `null` for SDR). MP4, MOV, and
+M4V containers are accepted; actual decoding uses the engine's supported codecs.
+No external metadata tool is required.
+
+Import adds the resource; the following action batch places it on the timeline
+and sets the document duration to match the clip.
+Apply it with `project apply --project project.tsrct --actions .tesseract-work/edits.json`.
+For a 2.5-second clip on a 1920×1080 canvas, for example (adapt duration, IDs,
+and transform to the returned metadata and the user's requested framing):
+
+```json
+[
+  {"type":"createFxVideoLayer","compositionId":"main","layerId":1,"name":"Main footage",
+   "activeRange":{"start":0,"duration":2500},
+   "sourceRange":{"start":0,"duration":2500},
+   "sourceIntrinsicDuration":2500,"volume":1.0,
+   "transform":{"anchorPoint":[0,0],"position":[0,0],"scale":[100,100],"rotation":0,"opacity":100},
+   "source":{"assetId":"footage-1","fit":"cover",
+     "sourceRect":{"x":0,"y":0,"width":1920,"height":1080}}},
+  {"type":"updateFxComposition","compositionId":"main","startTimeMs":0,"durationMs":2500}
+]
+```
+
+Import each distinct file once; multiple layers can reference the same asset.
+Use the actual clip duration for `sourceIntrinsicDuration`, and select the wanted
+section with `sourceRange`. Preserve footage audio unless the user asks to mute
+or replace it. Set `volume: 1.0` on new Video layers to enable embedded audio
+at unity gain; an omitted/null volume leaves it disabled. Preserve existing
+gain and animators on revisions, and verify the exported audio.
+`source.sourceRect` is the layer's media **frame** in layer-local pixels, not a
+crop of the source. Without it the frame is the source's natural size at the
+layer origin, so a 2560×1440 or vertical clip does not fill a 1920×1080 canvas.
+Set it to the canvas rectangle (as above, using the project's real canvas size)
+and choose `fit`: `cover` fills and clips, `contain` letterboxes. Select time
+with `sourceRange` and the playback mapping, never with `sourceRect`.
+
+To start a clip at source 5 s, set `sourceRange.start: 5000`.
+
+### `timeRemap` and physical media time
+
+All playback times are **milliseconds**, not frame indices. A windowed playback's
+`inputRange` is its visible half-open parent-clock window. `inputOffsetMs` is added
+to the incoming parent-clock time **before** evaluating `mapping` (including a
+`timeRemap` curve). In a unit-rate zero-origin linear map this also shifts the
+source time by that amount; for other rates or nonlinear curves, evaluate the
+mapping rather than treating the offset as an output-time addition.
+
+For example, this maps parent time 0–4000 ms identically to source time:
+
+```json
+{"type":"timeRemap","property":{"keyframes":[
+  {"id":"a","time":0,"value":0,"easing":{"type":"linear"}},
+  {"id":"b","time":4000,"value":4000,"easing":{"type":"linear"}}
+],"before":"inactive","after":"inactive"}}
+```
+
+Use this as `playback.mapping`, with `inputOffsetMs: 0`. Key `time` is the
+mapping's input clock in ms; `value` is its output/source time in ms (fractional
+values are allowed). `before`/`after` select extrapolation outside the keys;
+`inactive` produces no mapped sample there. The Video's `sourceRange` further
+restricts the mapped source window. A decreasing curve plays backward, and a
+held value freezes that source moment. Wrapping Groups compose their own clock
+mappings before the Video's mapping.
+
+Media sampling retains the precise physical output sample through those maps,
+quantizing only at the decoder's microsecond interface. Property/visibility
+clocks still use their existing integer-ms rules. Source selection remains the
+last presentation timestamp at or before the request, with the existing native
+499 µs guard; it is not nearest-frame selection. Reverse/discontinuous mappings
+retain their boundary side: right limits floor to µs, left limits use
+`ceil(µs) - 1`, then the same decoder guard applies. Consequently a left-limit
+request less than 499 µs before a PTS can still select that PTS.
+
+This removes former whole-ms media truncation and can change fractional-boundary
+selection, including VFR and reverse samples. `333` means literally 333 ms, not
+"source frame 10" for every codec or frame rate. At 30 fps it is close enough to
+frame 10 for the native guard; for VFR or arbitrary rates use the actual source
+presentation times. Do not add a blanket 5 ms bias to remap keys. Exact behavior
+of externally supplied/browser decoders remains the host decoder's contract.
+
+Inspect a preview to verify crop, orientation, and composition placement before
+adding overlays or exporting. If decoding fails, report the error and source format.
+
+## Paint colors above 1
+
+Rect/Solid `fillColor` and `strokeColor` and `ShapePaint.type="solid"`
+fill/stroke RGB can use finite values from 0 to 64; alpha stays from 0 to 1.
+Text, gradients, backgrounds and content-painting effect/style colors also accept
+extended RGB. In SDR export, RGB is divided by its largest channel when that
+channel exceeds 1, preserving channel ratios (no extra brightness); alpha is
+unchanged. Existing colors at or below 1 are unchanged. HDR export renders values
+above 1 brighter than graphics white; see [HDR](hdr.md#authored-rgb-above-1).
+**SDR-domain effect colors: 0..1** — Tint/TintTritone and similar engine color
+shaders retain their validation/clamps in HDR; Hue/Saturation Colorize remains
+scalar SDR controls. They cannot produce light above SDR white.
+
+## Rectangle overlay
+
+In the default `main` composition, this adds a blue card. Adapt the inspected
+composition ID, unused layer IDs, and geometry to the existing document.
+
+```json
+[
+  {"type":"createFxRectLayer","compositionId":"main","layerId":1,"name":"Card","insertIndex":0,
+   "activeRange":{"start":0,"duration":3000},
+   "transform":{"anchorPoint":[0,0],"position":[80,80],"scale":[100,100],"rotation":0,"opacity":100},
+   "rect":{"size":[400,160],"fillColor":[0.05,0.25,0.8,1]}}
+]
+```
+
+## Group related parts
+
+After the previous example, add an accent in front and group the two siblings.
+The identity group transform preserves their placement. Animate the group to
+move the callout together; animate a child for a detail within it.
+
+```json
+[
+  {"type":"createFxRectLayer","compositionId":"main","layerId":2,"name":"Accent","insertIndex":0,
+   "activeRange":{"start":0,"duration":3000},
+   "transform":{"anchorPoint":[0,0],"position":[80,80],"scale":[100,100],"rotation":0,"opacity":100},
+   "rect":{"size":[8,160],"fillColor":[1,0.7,0.1,1]}},
+  {"type":"groupFxCompositionLayers","compositionId":"main","layerIds":[2,1],"groupLayerId":3,"name":"Callout group",
+   "transform":{"anchorPoint":[0,0],"position":[0,0],"scale":[100,100],"rotation":0,"opacity":100}}
+]
+```
+
+Grouping requires contiguous siblings with the same parent. Use the grouping
+operation rather than manually reparenting children and rewriting their timing.
+
+## Text with an available font
+
+Choose typography for the brief before acquiring files. Honor supplied brand
+fonts; otherwise choose the character, width, weight, and hierarchy that suit
+the actual headline and supporting copy. The example's Inter Bold is a wire-format
+example, not a recommended design default. Availability in an OS folder, cache,
+or test fixture is not a reason to choose a face.
+
+Use supplied font files or obtain the selected TTF/OTF/TTC from an official
+source such as Google Fonts when downloads are allowed. Keep a recognizable
+filename and the source/license with the working files. If the requested font
+cannot be obtained, explain the gap before substituting it.
+
+Import the selected files into the document before authoring text.
+
+```sh
+tsrct project import-font --project project.tsrct --file /path/to/Inter-Bold.ttf
+```
+
+Use the returned `fontFamily` and `fontStyle`, not names guessed from the filename.
+For a collection, choose the intended face. The filename is a
+readable asset label; parsed metadata identifies the face, and the asset ID
+identifies the file's bytes. Import only the faces needed for the chosen design.
+Collection faces are listed under `faces`. Repeat import is a no-op. Preview
+and export use the packaged bytes after the document moves to another machine.
+
+Before building text-led animation, preview the actual words at their intended
+size and placement. Check character, hierarchy, line breaks, and glyph coverage;
+if the choice is uncertain, compare a small number of candidates in a scratch
+project before importing the selection into the deliverable. A successful import
+proves the file is usable, not that its typography fits the brief.
+
+This adds box text to group 3 above using the imported Inter Bold face.
+
+```json
+[
+  {"type":"createFxTextLayer","compositionId":"main","parentLayerId":3,"insertIndex":0,"layerId":4,"name":"Callout label",
+   "activeRange":{"start":0,"duration":3000},
+   "transform":{"anchorPoint":[0,0],"position":[112,112],"scale":[100,100],"rotation":0,"opacity":100},
+   "sourceText":{"text":"A useful detail","fontFamily":"Inter","fontStyle":"Bold","fontSize":32,
+     "fillColor":[1,1,1,1],"justification":"left","boxText":true,"boxPosition":[0,0],"boxSize":[336,96]}}
+]
+```
+
+Box text wraps but does not automatically shrink or clip overflow. Point text's
+local origin is its baseline start, not its visual center. Inspect a rendered
+frame for font metrics, line breaks, and overflow before animating the layout.
+
+## Text on a background
+
+For a label on a pill, tag, chip, badge, or button, let a Group draw the
+background around point text instead of sizing a separate rectangle by guess.
+A Group's fill, padding, and corner radii paint a rectangle that hugs its
+rendered children, so the background fits the words at any length or font and
+the text sits centered in it. Give each label its own Group. This adds one tag;
+`createFxGroupLayer` takes the Group's window as `activeRange` and stores it as
+its `playback`:
+
+```json
+[
+  {"type":"createFxGroupLayer","compositionId":"main","layerId":5,"name":"Tag","insertIndex":0,
+   "activeRange":{"start":0,"duration":3000},
+   "transform":{"anchorPoint":[0,0],"position":[0,0],"scale":[100,100],"rotation":0,"opacity":100}},
+  {"type":"createFxTextLayer","compositionId":"main","parentLayerId":5,"insertIndex":0,"layerId":6,"name":"Tag label",
+   "activeRange":{"start":0,"duration":3000},
+   "transform":{"anchorPoint":[0,0],"position":[150,1400],"scale":[100,100],"rotation":0,"opacity":100},
+   "sourceText":{"text":"Limited offer","fontFamily":"Inter","fontStyle":"Bold","fontSize":44,
+     "fillColor":[0.1,0.1,0.1,1],"justification":"left"}},
+  {"type":"updateGroupLayer","compositionId":"main","layerId":5,
+   "values":{"paddingTop":20,"paddingBottom":20,"paddingLeft":32,"paddingRight":32,
+     "cornerRadiusTopLeft":43,"cornerRadiusTopRight":43,"cornerRadiusBottomRight":43,"cornerRadiusBottomLeft":43,
+     "fillEnabled":true,"fillColor":[0.98,0.97,0.96,1]}}
+]
+```
+
+Place and animate the tag by its Group. The background follows the label when
+its text changes. Read the FX `layers` documentation (Group bounds, padding,
+and background) for gradient fills and nested Groups.
+
+A Group hugs its children's line height, not their letters: the room above
+capitals and below the baseline counts, so a small label over a large number
+comes out with more space below than above. Measure the letters instead of
+judging from thumbnails: the `fx.text-fit` and `fx.text-overlap` evaluate
+checks read each text's glyph outlines against its backdrop (its background
+Group, or a filled shape under it) over every frame. `overflow` means letters
+cross the backdrop's edge, `offCenter` gives the four margins when opposite
+sides differ, and `overlap` means two texts' letters intersect, including in
+the middle of a pop or slide. Fix every overflow and overlap; shift padding by
+the reported margins, or judge an offCenter against the design.
+
+```sh
+tsrct evaluate --project /absolute/path/edit/project.tsrct --checks fx.text-fit,fx.text-overlap
+```
+
+Add `--report fx.text-layout --time-ms <t>` for every text's letter box,
+backdrop and margins at one frame.
+
+
+## Bottom captions
+
+Keep spoken captions editable as FX text layers, with one short phrase per
+`activeRange`. Obtain the actual words and timings from a supplied transcript,
+reviewed audio, or an available transcription tool. The CLI does not transcribe.
+If none is available, ask for the spoken text rather than inventing dialogue.
+Map source timestamps through the footage's authored `playback.mapping` and
+`inputOffsetMs`, respecting its visibility window and `sourceRange` selection.
+
+Import the selected legible font file first. On a 1080×1920 portrait canvas, a useful
+starting point is centered box text at `[90, 1550]`, box size `[900, 220]`,
+font size `64`, and white fill. Adapt to the inspected canvas and shot. Keep
+phrases to one or two lines and use a dark rounded rectangle behind them when
+footage contrast needs it. Put both layers above the footage with matching
+active ranges, and keep the text ahead of its background in sibling order.
+
+Review phrase boundaries and the longest caption in the composed filmstrip.
+Verify the text stays inside the frame, clears the face and bottom edge, and
+matches the audible words. Preserve the video's embedded audio gain.

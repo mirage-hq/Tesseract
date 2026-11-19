@@ -107,9 +107,9 @@ Create an empty document for new work, or inspect the intended existing document
 tsrct project create --project project.tsrct
 ```
 
-Creation makes one empty composition (`main`) on a 1080×1920 canvas, lasting
-three seconds. Inspect its ID before adding content. Change canvas, duration,
-or composition name by checking out and committing the editable document JSON.
+Creation makes one empty composition (`main`) on a 1080×1920 canvas, or the
+`--width` and `--height` given, lasting three seconds. Inspect its ID before
+adding content.
 The document `duration` is in seconds; layer ranges and action times are milliseconds.
 
 Preview, filmstrip and export are SDR by default, even for footage that reports
@@ -125,7 +125,7 @@ canvas sizes. Dimensions must be positive, at most 7680 pixels per side and
 canvas background or use a bottom FX shape layer.
 
 Import supplied footage with `project import-video` before adding its video
-layer through JSON checkout/commit. Read [local footage](fx-authoring.md#local-footage).
+layer. Read [local footage](fx-authoring.md#local-footage).
 For images, music, sound effects, and processed audio, follow [media import](media-import.md).
 Before adding text, choose and obtain the intended font files, then package them
 with `project import-font --file`; see [text](fx-authoring.md#text-with-an-available-font).
@@ -150,15 +150,13 @@ Do not invent fields.
 
 ## Edit loop
 
-For shape, text, grouping, and animation edits, write a JSON array of supported
-composition-local actions in `.tesseract-work/edits.json`, applied as one atomic batch.
-The action schema excludes operations this standalone document rejects:
-project metadata, canvas changes, composition lifecycle, and asset-introducing actions.
-For those document edits and media layers, use the editable JSON schema:
+Write edits as a JSON array of supported actions in `.tesseract-work/edits.json`,
+applied as one atomic batch. For edits the action schema does not cover, use the
+editable JSON schema:
 
 ```sh
 tsrct project checkout --project project.tsrct --output .tesseract-work/editable.json
-# Edit dimensions, duration, composition, or layers using .tesseract-work/document.schema.json.
+# Edit using .tesseract-work/document.schema.json.
 tsrct project commit --project project.tsrct --file .tesseract-work/editable.json
 ```
 

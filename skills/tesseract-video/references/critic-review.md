@@ -20,6 +20,10 @@ rather than a broken render.
 - **Art director:** judges craft against the brief and the supplied references:
   the idea, composition, hierarchy, typography, color, motion and pacing,
   consistency, and finish.
+  For audio-only work, a producer takes this place and judges the idea,
+  arrangement, sound choices, groove, energy across sections, and finish.
+  For music, a music critic takes it instead and judges whether the piece is
+  good, catchy, exciting and compelling.
 - **Specialist:** an expert in what the deliverable must achieve for its audience
   and channel. Choose the role from the brief, for example:
 
@@ -33,6 +37,9 @@ rather than a broken render.
 | Titles, lower thirds, or overlays on footage | Broadcast designer: legibility over picture, safe areas, timing with the cut |
 | Data animation or diagram | Information designer: accuracy, clarity, honest scales |
 | 3D product shot or scene | Product visualization lead: form, materials, lighting, camera |
+| Song, beat, jingle, or music bed | Mix engineer: balance, low end, dynamics, loudness, translation to small speakers |
+| Podcast or voice mix | Podcast producer: intelligibility, consistent level, noise, loudness |
+| Binaural audio/Spatial Audio | Immersive audio engineer: placement, movement, distance, what stays ahead |
 | Poster or print-style graphic | Campaign designer for its venue: legibility at distance, message at a glance |
 | Social graphic | Social media strategist for that platform: stopping power in the feed, crop safety, copy |
 | Slide layout | Presentation designer: one idea per slide, readability in the room |
@@ -97,6 +104,8 @@ absolute path, with names that do not reveal a version or round:
     the host's image limit if lower.
   - Work with sound: the loudness measurements and waveform images (for an
     overlay, of its window).
+  - Audio-only work: the `export-audio` loudness report, its spectrogram and
+    waveforms, and the arrangement by bar.
   - An editor: screenshots of a loaded project, an edit, playback, a save, and an
     error message you can trigger, such as opening an invalid file. If you cannot
     capture the running editor, say so; the critics then review the code and

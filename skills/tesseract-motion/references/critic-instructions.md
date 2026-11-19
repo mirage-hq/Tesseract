@@ -21,6 +21,9 @@ judging it against the brief from the evidence your prompt lists.
   contrast ratio, a luma or color sample across a cut, sharpness, or a safe-area
   overlay; cite the number as the issue's evidence.
 - Score only what the evidence shows, not the effort behind it.
+- For audio & music: judge the mix from the measurement report, spectrogram
+  and waveforms, or from the score of the notes, whichever you are given; cite
+  readings such as LUFS, dBTP, band levels, bar numbers and notes as evidence.
 
 ## Render more frames
 

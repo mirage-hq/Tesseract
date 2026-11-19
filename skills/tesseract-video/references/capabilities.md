@@ -17,7 +17,9 @@ that every requested combination renders correctly; inspect the actual result.
 | Color grading | Primary, wheels, curves, Creative LUT (`.cube`), log Input Transform, hue/saturation/luminance selections, opt-in ACES color management (ACEScct grading, ACES 2.0 SDR/HDR output, built-in camera input transforms); measured from rendered frames | [color grading](color-grading.md) |
 | Custom effects | Bounded premultiplied-alpha WGSL with declared parameters and layer texture inputs | [custom shader contract](custom-shader.md) |
 | Audio | Embedded video sound; imported Audio layers, source timing, linear gain and envelopes | [audio and timing](audio-and-timing.md) |
-| Local sound tools | Procedural WAV accents, source/edit waveform PNGs, loudness measurements and mono listening copies | [sound design](sound-design.md), [waveform editing](waveform-editing.md) |
+| Audio processing and mixing | A mixer on every track, Audio and Video layer and the master, with insert effects, sidechain ducking and automation; stems, a loudness and stereo report, a spectrogram and waveforms from `export-audio`; waveform PNGs and mono listening copies | [mixer](daw-mixer.md), [automation](daw-automation.md), [waveform editing](waveform-editing.md) |
+| Music production | Tracks and audio clips; MIDI clips playing subtractive and FM synth, sampler and drum-kit instruments; tempo and time signatures; tempo, beat and downbeat detection of any audio; `.mid` import and export; procedural WAV accents | [tracks](daw-tracks.md), [MIDI](daw-midi.md), [sound design](sound-design.md) |
+| Spatial audio | Binaural placement and movement for headphones, with optional Doppler; goes great with a 3D scene | [mixer](daw-mixer.md), [spatial audio](sound-design.md#spatial-audio-for-headphones) |
 | Inspection/output | PNG preview, labeled project/solo filmstrips, H.264/AAC MP4, ProRes 4444 MOV (transparent with silent solo), HEVC HDR (PQ/HLG) MP4 and PQ PNGs | [local operation](local-operation.md), [filmstrip review](filmstrip-review.md), [HDR](hdr.md) |
 | 3D scenes | A Scene3D layer with cameras, lights, meshes, imported `.glb`/`.blend` models, materials and environment; keyframes and scripts on scene item properties; model rig, clip and cloth preparation inside `project apply` | [Scene3D basics](scene3d-basics.md), [recipes](scene3d-recipes.md), [Blender map](scene3d-blender.md), [Scene3D properties](scene3d-properties.md) |
 
@@ -25,6 +27,7 @@ that every requested combination renders correctly; inspect the actual result.
 
 - A document owns one FX composition. Use groups for scenes and Video layers for
   cuts, not `baseVideoTrack`, `fxCompositions`, or caption/audio tracks.
+  DAW tracks are different: they are Track layers inside that composition.
 - Import packages local MP4/MOV/M4V footage, TTF/OTF/TTC font files, and
   3D `.cube` LUTs.
   A 3D-enabled CLI also packages models, IES photometry, cloth point caches
@@ -38,6 +41,13 @@ that every requested combination renders correctly; inspect the actual result.
   output before delivery.
   Export a timeline segment with `--start-ms` and/or `--duration-ms`.
   `export-audio` writes only the mix, as a WAV, without rendering video.
+  With `--stems`, `--report`, `--spectrogram` and `--waveforms` it also writes
+  each bus's stem, a loudness report with each bus's stereo correlation, mono
+  fold-down loss and detected tempo, a spectrogram and each bus's waveform from
+  the same render. `detect-tempo` gives a file's or an Audio layer's tempo, beats
+  and first downbeat. `sample-zone` gives a sample's trim, gain, root note
+  and tuning for a sampler zone, and a sustain loop, or a zone per slice of a
+  break.
 - Canvas choices are listed in [local operation](local-operation.md). A bottom
   shape or the document's `backgroundColor` sets the background.
 - Native masks/mattes, effects, and supported 3D layer transforms are available
@@ -52,8 +62,13 @@ that every requested combination renders correctly; inspect the actual result.
   For path-traced CLI previews and exports, follow [renderer selection](scene3d-basics.md#choose-the-renderer). Browser and iOS playback use raster.
 - No generative video, avatar service, transcription, dedicated dereverberation
   model, cloud rendering, publishing, or editable Premiere/AE export is bundled.
-- Native gain envelopes are timed ducking, not signal-driven compression. Do not
-  invent DSP fields. Local derivatives use available FFmpeg and are imported as audio; see [speech cleanup](speech-cleanup.md).
+- Audio processing is native: insert effects and automation on mixer channels,
+  with exact fields in the action schema, including noise reduction against a
+  profile `learn-noise` measures and compressors keyed by another track or
+  layer for ducking. There is no dereverberation; it uses a local FFmpeg
+  derivative imported as audio; see [speech cleanup](speech-cleanup.md). A
+  document with tracks, MIDI or mixer settings may not open in a later CLI
+  build.
 - CLI setup follows [installation](installation.md).
 - Optional audio helpers need
   Python 3.9+ and local FFmpeg/ffprobe. Font import requires a local TTF/OTF/TTC file;
@@ -64,8 +79,9 @@ that every requested combination renders correctly; inspect the actual result.
 Save the two schemas locally and search for the specific layer, property, effect,
 or action definition. Preserve existing fields and animation relationships.
 Use action batches where the action schema covers the edit, and direct document
-JSON edits for document-level edits and media placement.
+JSON edits otherwise.
 The action schema includes only supported standalone operations; use
 checkout/commit for the document JSON. Use the installed CLI’s schemas and available tools.
 If the requested feature is unavailable, explain the specific
-limit and continue supported work without switching engines silently.
+limit, propose the closest supported approach and continue the supported work in
+Tesseract. Use another engine for that part only when the user asks for it.

@@ -3,7 +3,6 @@
 Inspect the document for existing content. Exact fields come from the installed
 action schema, or the document schema for editable JSON.
 Use `project inspect`, `project schema`, and `project schema --document`.
-The footage example edits document JSON; the other examples are action batches.
 
 ## Document color management
 
@@ -28,15 +27,19 @@ Omitting it uses `legacyDisplay`. For ACES setup, compositing presets, layer
   Read the project's canvas dimensions rather than treating source pixels as
   composition coordinates. Parent transforms also affect children.
 - `sourceRange` selects media time independently of `playback.inputRange`.
-  Video/Audio/Group require windowed `playback` with an authored `mapping` and
-  `inputOffsetMs`; do not also supply `activeRange`. Moving a visibility window
+  In document JSON, Video/Audio/Group require windowed `playback` with an
+  authored `mapping` and `inputOffsetMs`; do not also supply `activeRange`.
+  Moving a visibility window
   and changing its content clock are different operations.
-- Keyframe `layerTime` on a windowed Video/Audio/Group is on its content clock
-  (the mapped `playback` output, so `inputOffsetMs` included), clamped to the
-  window, not "milliseconds since the layer appeared". With
-  `inputOffsetMs` 1700, the first visible frame is at `layerTime` 1700. To animate
-  from the moment a clip appears regardless of its source offset, wrap it in a
-  Group and animate the Group.
+- Keyframe `layerTime` on a windowed Video/Audio is its playback input clock:
+  parent time minus `mapping.input.start`, plus `inputOffsetMs`, at unit rate.
+  The mapping's output and rate select source frames only; they do not move
+  keys. With `mapping.input.start` equal to `inputRange.start`, the first
+  visible frame is at `layerTime` equal to `inputOffsetMs` (0 when it is 0),
+  wherever the clip starts in the source. On a windowed Group, `layerTime` is
+  the mapped `playback` output, its content clock. Layer time is clamped to the
+  visible window. To animate from the moment a clip appears regardless of its
+  `inputOffsetMs`, wrap it in a Group and animate the Group.
 - Import local footage before referencing its asset ID.
   An arbitrary path or asset ID in an action does not import its bytes.
   Import audio/images through [media import](media-import.md); package fonts as below.
@@ -58,26 +61,22 @@ are rejected to avoid replacing another layer's media. The JSON response reports
 M4V containers are accepted; actual decoding uses the engine's supported codecs.
 No external metadata tool is required.
 
-Import adds the resource; the following editable document JSON places it on the
-timeline. Append the layer below to the composition's layers and set the
-document duration to three seconds.
-Run `project checkout` first and
-`project commit --project project.tsrct --file .tesseract-work/editable.json` afterwards.
-Preserve other layers; append footage behind overlays because index zero is frontmost.
-
-For a three-second clip, for example (adapt duration, IDs, canvas, and transform
-to the returned metadata and the user's requested framing):
+Import adds the resource; the following action batch places it on the timeline
+and sets the document duration to match the clip.
+Apply it with `project apply --project project.tsrct --actions .tesseract-work/edits.json`.
+For a 2.5-second clip on a 1920×1080 canvas, for example (adapt duration, IDs,
+and transform to the returned metadata and the user's requested framing):
 
 ```json
 [
-  {"type":"Video","id":1,"name":"Main footage",
-   "playback":{"type":"windowed","inputRange":{"start":0,"duration":3000},
-     "mapping":{"type":"linear","input":{"start":0,"duration":3000},"output":{"start":0,"duration":3000}},"inputOffsetMs":0},
-   "sourceRange":{"start":0,"duration":3000},
-   "sourceIntrinsicDuration":3000,"volume":1.0,
+  {"type":"createFxVideoLayer","compositionId":"main","layerId":1,"name":"Main footage",
+   "activeRange":{"start":0,"duration":2500},
+   "sourceRange":{"start":0,"duration":2500},
+   "sourceIntrinsicDuration":2500,"volume":1.0,
    "transform":{"anchorPoint":[0,0],"position":[0,0],"scale":[100,100],"rotation":0,"opacity":100},
    "source":{"assetId":"footage-1","fit":"cover",
-     "sourceRect":{"x":0,"y":0,"width":1920,"height":1080}}}
+     "sourceRect":{"x":0,"y":0,"width":1920,"height":1080}}},
+  {"type":"updateFxComposition","compositionId":"main","startTimeMs":0,"durationMs":2500}
 ]
 ```
 
@@ -94,11 +93,7 @@ Set it to the canvas rectangle (as above, using the project's real canvas size)
 and choose `fit`: `cover` fills and clips, `contain` letterboxes. Select time
 with `sourceRange` and the playback mapping, never with `sourceRect`.
 
-For the unit-rate linear mapping above, the visible source moment is parent
-time plus `inputOffsetMs` and must lie inside `sourceRange`: to start a clip at
-source 5 s, set `inputOffsetMs: 5000` and `sourceRange.start: 5000` together. Keyframes on the Video use that same
-content clock (see below), so animate a wrapping Group for "time since the clip
-appeared".
+To start a clip at source 5 s, set `sourceRange.start: 5000`.
 
 ### `timeRemap` and physical media time
 

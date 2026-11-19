@@ -40,7 +40,7 @@ Use the imported asset ID in an Audio layer, with `captionsEnabled: false` for m
 
 ## Local mix
 
-New Video layers need `volume: 1.0` to enable embedded source audio at unity gain; omitted/null volume disables it. Preserve existing gains on revisions. FX `Audio` layers can place music, a supplied sound effect, or dialogue independently. They have no visual transform. A minimal source carries `assetId`; the source range and windowed `playback` are explicit (Audio has no `activeRange`).
+New Video layers need `volume: 1.0` to enable embedded source audio at unity gain; omitted/null volume disables it. Preserve existing gains on revisions. FX `Audio` layers can place music, a supplied sound effect, or dialogue independently. They have no visual transform. A minimal source carries `assetId`; in document JSON, the source range and windowed `playback` are explicit (Audio has no `activeRange`).
 
 ```json
 {
@@ -59,7 +59,7 @@ New Video layers need `volume: 1.0` to enable embedded source audio at unity gai
 ```
 
 Use the schema to check additional source metadata or per-channel features.
-Do not infer all audio effects of a DAW from the presence of an Audio layer.
+Every Audio and Video layer also has a mixer channel with pan, insert effects and automation; see [native processing](#native-controls-versus-local-audio-preparation).
 
 `volume` is linear: unity is `1.0`; `0.5` is approximately −6 dB. Convert dB with `10 ** (dB / 20)`. A fixed value such as `0.2` is a starting point, not a calibrated mix target. Loud source material needs different gain.
 
@@ -92,17 +92,7 @@ For another duration, change the envelope accordingly. The times are owner-layer
 
 This package supports native Audio layers, source/active timing, linear gain, and time-varying volume. Use envelopes for predictable ducking, fades, and planned dropouts. This is **timed ducking**, not an audio-reactive sidechain compressor.
 
-Do not invent native `compressor`, `sidechain`, `EQ`, `pan`, or `truePeakLimiter` fields. When the source needs EQ/compression, prepare a new **local audio derivative** with installed FFmpeg, keep the original source and processing recipe, and import it as audio and mix it through Tesseract. Do not flatten the editable project or quietly change the original media.
-
-For example, a gentle music presence dip can be auditioned with:
-
-```bash
-ffmpeg -nostdin -n -i /absolute/path/music.wav -af "equalizer=f=2000:t=q:w=0.8:g=-3" -ar 48000 -c:a pcm_s24le /absolute/path/music-presence-v1.wav
-```
-
-Real signal-driven ducking, when needed, can be prepared with FFmpeg `sidechaincompress` using **aligned full-length** music and dialogue stems, both starting at the same edit zero. Its first input is the music to process; the second is the dialogue detector. Preserve the separate dialogue track when assembling the Tesseract mix. Adjust threshold/ratio from the source, check attack/release and actual reduction, and do not apply both the preprocessed duck and a second unplanned native duck. Misaligned, trimmed, or short detector stems need alignment/padding first. A source with music and voice already mixed together is not a clean dialogue detector.
-
-Use `ffmpeg -h filter=<name>` to verify the locally installed filter/options before processing. Filter behavior and available controls are described in the [official FFmpeg filter reference](https://ffmpeg.org/ffmpeg-filters.html#sidechaincompress).
+Every track, Audio and Video layer and the master also has a native mixer channel: a trim, pan, mute and solo and an ordered chain of insert effects (EQ, compressor, limiter, gate, de-esser, plosive remover, noise reduction, multiband compressor, reverb, delay, chorus, flanger, phaser, distortion and binaural placement), and automation moves them over time. Use these for EQ, dynamics, pan and peak limiting instead of FFmpeg derivatives, for example a gentle presence dip as an EQ bell on the music. To rebalance a layer whose `volume` is animated or keyed, set its mixer `trimDb` (a static gain in dB the animation doesn't replace) instead of rewriting the envelope or rescaling its keys. Read [DAW mixer](daw-mixer.md) and [DAW automation](daw-automation.md), and take exact fields from the action schema. To duck music under speech, key a compressor on the music's track by the dialogue's track or layer ([sidechain](daw-mixer.md#sidechain)); use gain automation or envelopes for a planned duck. There is no dereverberation; see [speech cleanup](speech-cleanup.md).
 
 ## Editing sound
 
@@ -114,7 +104,9 @@ Use `ffmpeg -h filter=<name>` to verify the locally installed filter/options bef
 
 ## Review
 
-Listen to the final muxed video, not just separate audio files. Check the head and tail, dialogue-to-music balance, abrupt gain edges, and source synchronization. Measure loudness/peaks locally with FFmpeg if needed; for example `ffmpeg -i edit.mp4 -af ebur128=peak=true -f null -`. Treat readings as measurements, not proof that speech is intelligible. Keep reasonable peak headroom and follow an explicit delivery spec when one is provided.
+Listen to the final muxed video, not just separate audio files. Check the head and tail, dialogue-to-music balance, abrupt gain edges, and source synchronization.
+Measure loudness and peaks from `tsrct export --json`'s `encodedAudio`, as [measure and check the final delivery](#measure-and-check-the-final-delivery) describes.
+Treat readings as measurements, not proof that speech is intelligible. Keep reasonable peak headroom and follow an explicit delivery spec when one is provided.
 
 For a dialogue-only diagnostic, check out the working document and commit a
 separate `.tsrct` copy with music/SFX gains and any gain animators muted. Export
@@ -123,15 +115,17 @@ Preserve the working mix and source files; do not claim unperformed listening ch
 
 ## Measure and check the final delivery
 
+Measure the file you deliver, not the mix: AAC can raise a limited mix's true peak by half a decibel. `tsrct export --json` reports the encoded audio's levels in its result's `encodedAudio`: `integratedLufs` and `truePeakDbtp`, measured as the `export-audio` report measures the mix, after decoding the AAC the export wrote (`null` when it has no audio). Set the AAC bitrate with `--audio-bitrate` in kb/s: 128 by default, 256 or 320 for music; `tsrct export --help` lists the rates it takes.
+
 ```bash
-python3 "$SKILL/scripts/tesseract_sound.py" measure /absolute/path/edit-v1.mp4 --report "$WORK/checks/loudness.json" --overwrite
+tsrct export --project /absolute/path/edit.tsrct --output /absolute/path/edit-v1.mp4 --audio-bitrate 256 --json
 python3 "$SKILL/scripts/tesseract_sound.py" mobile-preview /absolute/path/edit-v1.mp4 --output "$WORK/checks/mobile.wav" --overwrite
 ```
 
-The helpers never replace an existing file unless you pass `--overwrite`, which works only inside `WORK`; use it for routine checks such as these, which each pass refreshes.
+The helper never replaces an existing file unless you pass `--overwrite`, which works only inside `WORK`; use it for routine checks such as this, which each pass refreshes.
 
-`measure` reports the first audio stream's integrated LUFS, true peak in dBTP, and loudness range; it does not normalize or modify the input. The working range is −16 to −14 LUFS and true peak at most −1 dBTP, subject to the actual delivery spec. Short isolated effects or silence may not have meaningful integrated measurements. If the deliverable has several audio programs, measure the intended stream explicitly with FFmpeg.
+The working range is −16 to −14 LUFS and true peak at most −1 dBTP, subject to the actual delivery spec. Short isolated effects or silence may not have meaningful integrated measurements.
 
-For mastering, first adjust the native mix. If final normalization is needed, preserve the editable mix, use a measured two-pass `loudnorm` process on a derived deliverable, and record the recipe. Check the local [loudnorm options](https://ffmpeg.org/ffmpeg-filters.html#loudnorm): use the measured input loudness, range, peak, threshold, and target offset from pass one in pass two, then remeasure the encoded output. Do not normalize each individual cue to the full-program LUFS target or erase an intentional dropout to satisfy a meter.
+When the encoded audio misses the spec, fix the native mix and export again: lower the master's limiter ceiling or output gain for the true peak, and adjust the master's gain for loudness. Do not re-encode, normalize or replace the exported audio with FFmpeg, and do not normalize each individual cue to the full-program LUFS target or erase an intentional dropout to satisfy a meter.
 
 `mobile-preview` creates a separate mono, 150 Hz–7 kHz listening copy. It is useful for noticing disappearing bass-dependent cues, phase cancellation, or poor voice balance, but it is not the final mix and does not replace listening on an actual phone.

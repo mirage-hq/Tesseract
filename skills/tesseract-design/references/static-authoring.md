@@ -62,7 +62,7 @@ images, and supported effects are native FX layers.
   fields and re-read the document JSON after action batches before making further
   JSON edits.
 - An action batch applies an array of supported composition-local actions
-  atomically. Canvas and media-layer structure edits go in the document JSON instead.
+  atomically.
   Apply one with `project apply --project Design.tsrct --actions .tesseract-work/edits.json`;
   edit the JSON through checkout/commit.
 

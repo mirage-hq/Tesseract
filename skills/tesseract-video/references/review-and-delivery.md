@@ -34,6 +34,13 @@ Extract a representative alpha frame with FFmpeg `-vf alphaextract` and inspect 
 verify both uncovered transparent pixels and the intended opaque content. Composite
 over light and dark backgrounds to check edges and shadows. MP4 does not carry alpha.
 
+For a delivery with audio, check the levels of the exported file rather than
+the mix: export with `--json` and read `encodedAudio` (`integratedLufs` and
+`truePeakDbtp` of the AAC the export wrote), and choose the AAC bitrate with
+`--audio-bitrate` instead of re-encoding the export's audio with FFmpeg. See
+[measure and check the final delivery](audio-and-timing.md#measure-and-check-the-final-delivery).
+Report both values at handoff.
+
 For fonts, render representative text with the imported files and check it against
 [the chosen typography](fx-authoring.md#text-with-an-available-font). Check both
 visual fit and glyph/layout correctness; successful export alone proves neither.

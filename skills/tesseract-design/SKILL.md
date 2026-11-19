@@ -12,6 +12,8 @@ Turn the user's brief into static visual designs as editable compositions, rende
 Render them with `tsrct preview`. Deliver the PNGs as the primary result and keep their editable `.tsrct` sources for revisions.
 Match the format to the request: a poster, social graphic, slide, diagram, interface mockup, or another composition.
 
+Do in Tesseract everything Tesseract can do, and keep the result native and editable. When it cannot do something, say so, propose the closest native approach, and use another tool only if the user asks for it.
+
 The CLI may send basic usage telemetry for some commands. Read [telemetry](references/telemetry.md) for collected data and opt-out; never enable telemetry on the user's behalf.
 
 ## Establish the design

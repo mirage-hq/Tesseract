@@ -20,7 +20,7 @@ Do not concatenate every recipe into one document: their IDs intentionally overl
 ```
 
 ```sh
-tsrct project create --project scene.tsrct
+tsrct project create --project scene.tsrct --width 640 --height 480
 tsrct project apply --project scene.tsrct --actions base.json
 ```
 
@@ -29,8 +29,6 @@ Unless stated otherwise, save a recipe's JSON as `recipe.json` and apply it afte
 Model follow-ups each start from the model-placement recipe, not from each other.
 For `setFxPropertyValue` and `setFxAnimator`, put `layerId` **inside `target`**,
 not beside `compositionId`; their style targets also require `itemId` and `propertyName`.
-For a landscape canvas, checkout the document, change `dimensions` to
-`{"width":640,"height":480}`, then commit it; the examples were checked at that size.
 
 ```sh
 tsrct project apply --project scene.tsrct --actions recipe.json &&
@@ -196,7 +194,179 @@ Check the head turning independently of the torso and arm motion.
 The node uses its imported source key, and `localTransform` must list its control ID
 in `poseStack`; order matters when a later clip would otherwise overwrite the pose.
 
-## 8. HDRI background and illumination
+## 8. Rig a static character and place its hand with IK
+
+Give an unrigged humanoid a skeleton, then raise its right hand to its heart and lower it.
+Do not write your own skinning or baked-animation generator: rigging and IK are built in.
+This starts after `base.json` from a static body standing at the origin, facing glTF +Z,
+one mesh on node `Body`.
+
+```sh
+tsrct project import-asset --project scene.tsrct --file body.glb \
+  --asset-id body --kind model3d > body-import.json
+```
+
+Save the body as `body.json`, the rig request as `rig-request.json`, and the rig
+description below them as `rig.json`:
+
+```json
+[
+  {"type":"addFxScene3DFragment","compositionId":"main","layerId":1,"data":[{"type":"model","id":200,"name":"Body","assetId":"body"}],"items":[{"type":"Model3D","id":20,"parentId":null,"name":"Body","dataId":200,"transform":{"position":[0,150,0],"scale":[100,100,100]},"materialSlots":[],"modelRegionSlots":[]}]}
+]
+```
+
+```json
+{"type":"prepareScene3dModelRig","compositionId":"main","layerId":1,"itemId":20,"dataEditMode":"shared","recipeFile":"rig.json","assetId":"body-rigged"}
+```
+
+```json
+{"version": 2, "template": {"kind": "biped", "landmarks": {
+  "pelvis": [0, 1.5, 0], "neck": [0, 2.3, 0], "head": [0, 2.45, 0],
+  "shoulder.L": [0.42, 2.2, 0], "elbow.L": [0.78, 1.8, -0.06], "wrist.L": [1.1, 1.38, 0],
+  "shoulder.R": [-0.42, 2.2, 0], "elbow.R": [-0.78, 1.8, -0.06], "wrist.R": [-1.1, 1.38, 0],
+  "hip.L": [0.2, 1.42, 0], "knee.L": [0.24, 0.82, 0.06], "ankle.L": [0.26, 0.22, 0],
+  "hip.R": [-0.2, 1.42, 0], "knee.R": [-0.24, 0.82, 0.06], "ankle.R": [-0.26, 0.22, 0]
+}}, "bindings": [{"node": "Body", "weights": {}}]}
+```
+
+```sh
+tsrct project apply --project scene.tsrct --actions body.json
+tsrct project prepare --project scene.tsrct --request rig-request.json \
+  --output-dir rig > rig-report.json
+tsrct project apply --project scene.tsrct --actions rig/actions.json --assets rig/assets.json
+```
+
+`prepareScene3dModelRig` rigs the object's current model; `project prepare` writes the
+result as a new `assetId` and the frozen model swap, which `project apply` packages and
+applies together. `recipeFile` is relative to the current directory.
+
+- The biped template fits named joints (`hips`, `spine` … `spine.002`, `neck`, `head`,
+  `upper_arm.R`, `forearm.R`, `hand.R`, `thigh.R` …) to landmarks.
+- Landmarks are model-space metres, as the import report gives them (+Y up, the
+  character's left at +X), at each pivot inside the mesh. `toe.L`/`toe.R` are optional,
+  as a pair.
+- Optional landmarks add joints, each group given whole or not at all. Per finger, its
+  knuckle (where it leaves the palm; for the thumb, its base by the wrist) and its tip,
+  on a straight line along the finger, on both sides: `thumb.L` and `thumb_tip.L`,
+  `index.L` and `index_tip.L`, likewise `middle`, `ring`, `pinky`. Each gives three
+  joints under the hand (`thumb.01.L` … `thumb.03.L`, `f_index.01.L` …
+  `f_pinky.03.L`) at 0, 0.45 and 0.75 of the way to the tip. With two fingers other
+  than the thumb (or the thumb and one other), the hand has a palm: its +X runs across
+  the palm, and a positive `rotationX` curls the hand, each finger and the thumb toward
+  the palm; without a palm they bend in the arm's plane. `jaw` (where the jaw pivots)
+  with `chin` gives a `jaw` that a positive `rotationX` opens, and `eye.L`/`eye.R` (eye
+  centers) give eye joints looking forward; both hang from `head`. `"spineCount": 4` in
+  `template` sets the spine joints (default 3; a quadruped also takes `neckCount`,
+  default 2, and `tailCount`, default 4). Without them the fit is unchanged.
+- Estimate them from `model.bounds` and the height `H` from the soles: pelvis and hips
+  0.52 H, hips ±0.09 H to the sides, neck 0.82 H, head 0.87 H, shoulders 0.81 H at
+  ±0.12 H, knees 0.28 H, ankles 0.04 H; elbow and wrist a third and two thirds of the way
+  from shoulder to fingertips. Correct them against a rendered pose; the values above fit
+  this 3 m body.
+- `"weights": {}` generates smooth weights over every fitted joint for the node named in
+  the import report.
+
+The prepare output's `report` holds the rigged asset's `model` and `importManifest`,
+as `import-asset` prints them. The direct `rig` and `normalization` fields also
+appear on that report. `rig.joints` gives each joint's glTF `node` index (here
+`upper_arm.R` 12, `forearm.R` 13, `hand.R` 14), and every `rig.weights[].joints`
+entry should be `converged` with no `fallback` pieces. The legacy
+`report.report.rig` and `report.report.normalization` paths remain equal aliases.
+Use `query-pose`'s `nodes[].worldAxes.{x,y,z}` for the positive authored local
+axis directions after posing and placement, not Euler-derived axes. A collapsed
+axis is null; mirroring and shear are retained. Fitted bones run along native
++Y, which maps to authored `negativeY`; use that aim axis for their length,
+not as a universal imported-model convention or `lookAt` default.
+
+Save the reach as `ik.json`; its target and pole name the chest joint `spine.002`:
+
+```json
+[
+  {"type":"addFxScene3DModelConstraint","compositionId":"main","layerId":1,"itemId":20,"constraint":{"type":"twoBoneIk","id":30,"tip":14,"influence":0,"target":{"id":31,"target":{"type":"modelNode","model":20,"node":"SPINE_002_KEY"},"offset":[0,5,-42],"offsetSpace":"target"},"pole":{"id":32,"target":{"type":"modelNode","model":20,"node":"SPINE_002_KEY"},"offset":[-100,50,-20],"offsetSpace":"target"}}},
+  {"type":"addFxScene3DModelConstraint","compositionId":"main","layerId":1,"itemId":20,"constraint":{"type":"transform","node":14,"operation":{"type":"copyRotation","id":33,"target":{"id":34,"target":{"type":"modelNode","model":20,"node":"SPINE_002_KEY"},"offset":[0,0,0],"offsetSpace":"world"},"ownerSpace":"world","targetSpace":"world","rotationOffset":[0,0,-90],"influence":0}}},
+  {"type":"setFxAnimator","compositionId":"main","target":{"type":"styleProperty","layerId":1,"itemId":30,"propertyName":"influence"},"animator":{"type":"keyframes","enabled":true,"keyframes":[{"id":"reach-rest","layerTime":0,"value":{"type":"float","value":0},"easing":{"type":"linear"}},{"id":"reach-in","layerTime":1000,"value":{"type":"float","value":1},"easing":{"type":"cubicBezier","x1":0.42,"y1":0,"x2":0.58,"y2":1}},{"id":"reach-hold","layerTime":1800,"value":{"type":"float","value":1},"easing":{"type":"linear"}},{"id":"reach-out","layerTime":2800,"value":{"type":"float","value":0},"easing":{"type":"cubicBezier","x1":0.42,"y1":0,"x2":0.58,"y2":1}}]},"dependencies":[],"layerRefBindings":[]}
+]
+```
+
+To adjust one pose application later, do not replace the Model3D item. For
+example, if node control 40 already exists, replace only the second stack entry:
+
+```json
+{"type":"updateFxScene3DModelPoseEntry","compositionId":"main","layerId":1,"itemId":20,"index":1,"entry":{"type":"localTransform","control":40},"pruneAnimation":true}
+```
+
+Use `addFxScene3DModelPoseEntry` to insert (`index`, or omit to append),
+`moveFxScene3DModelPoseEntry` to reorder (`index`, `toIndex` after removal), or
+`removeFxScene3DModelPoseEntry` to unschedule (`index`). Stored controls are kept. Removal or retargeting requires `pruneAnimation: true`
+because the old application stops driving the model.
+To change control 40 itself, use `updateFxScene3DModelNode` with `nodeId: 40`
+and the complete node retaining its id/source; use `updateFxScene3DModelMorph`
+for morph controls. Existing clip bindings and blend masks use
+`setFxScene3DModelClip` and `setFxScene3DModelBlendMask`; key numeric controls
+with the ordinary property animator. Entries have indices, not independent ids.
+
+Fill in the joint's key, the `importManifest` node entity labelled `spine.002`:
+
+```sh
+python3 - <<'PY'
+import json
+manifest = json.load(open('rig-report.json'))['report']['importManifest']
+key = next(entity['key'] for entity in manifest['entities']
+           if entity['kind'] == 'node' and entity['label'] == 'spine.002')
+actions = json.load(open('ik.json'))
+for binding in ('target', 'pole'):
+    actions[0]['constraint'][binding]['target']['node'] = key
+actions[1]['constraint']['operation']['target']['target']['node'] = key
+# Drive the orientation operation, not its target binding, on the IK clock.
+import copy
+orientation = copy.deepcopy(actions[2])
+orientation['target']['itemId'] = 33
+for frame in orientation['animator']['keyframes']:
+    frame['id'] = frame['id'].replace('reach-', 'palm-')
+actions.append(orientation)
+with open('ik.json', 'w') as f:
+    json.dump(actions, f)
+PY
+tsrct project apply --project scene.tsrct --actions ik.json &&
+  tsrct project check --project scene.tsrct &&
+  tsrct filmstrip --project scene.tsrct --timestamps-ms 0,500,1000,1800,2300,2800 \
+    --frame-rate 30 --output reach.png
+```
+
+Check the arm at rest, the hand on the left chest from 1.0 to 1.8 s with the elbow out
+and down, and the arm back at rest at 2.8 s; turn the model or render a side view to see depth.
+
+- `tip` is the hand joint's node index; `mid` and `root` default to its parent and
+  grandparent (forearm, upper arm).
+- The target and pole read a joint of the **same model** (`model` is the Model3D's own item
+  ID); a model's own constraints never form a cycle with themselves. Because they follow
+  the chest, the hand stays on it when the model moves or turns and when the spine bends
+  (a forward lean carries the hand with the chest; a target on the mesh node `Body` would
+  stay put and let the chest swallow the hand).
+- With `offsetSpace: "target"` the offset is in pixels along the joint's axes in the Scene3D
+  basis; a template's spine joints share the character's: +X its left, −Y up, −Z its front.
+  At `pixelsPerMeter` 100, `[0,5,-42]` is 5 cm below `spine.002` (2.1 m up) and 0.42 m
+  forward, just in front of the chest, whose front is 0.34 m forward; the hand extends
+  from the wrist across the left chest.
+- IK places the wrist, not the palm. `keepTipRotation` preserves the played hand
+  orientation; it does not aim the palm at the chest. The appended `copyRotation`
+  runs after IK, preserving the solved wrist origin. With both spaces `world`, full
+  hand rotation is chest rotation × EulerXYZ(`rotationOffset`) (degrees).
+  `[0,0,-90]` is an explicit starting calibration, **not a universal palm alignment**:
+  calibrate the XYZ offset once for this asset's hand axes in front and side views,
+  then retain it as the chest turns. Set the IK target clearance for the actual hand
+  and chest geometry; a correct wrist position alone does not prevent intersections.
+  The script keys operation 33 with exactly the IK times, values and easing
+  (0 → 1 → 1 → 0 at 0, 1000, 1800, 2800 ms).
+- The pole sets the side the elbow points to: `[-100,50,-20]` is out to the character's
+  right at elbow height. Without a pole the arm bends in its rest plane.
+- `influence` 0 leaves the rest pose exactly; keys on the constraint `id` (30) blend to the
+  solved pose and back.
+- `project check` reports `tip`/`mid`/`root` indices the model lacks and, as
+  `unknown_model_node`, a target or pole key the model lacks. `project apply` accepts both
+  (edits do not load assets) and the render would leave the arm at rest, so run the check.
+
+## 9. HDRI background and illumination
 
 Use one imported HDR environment for visible background and sampled world lighting (**box first**).
 
@@ -210,7 +380,7 @@ First run `tsrct project import-asset --project scene.tsrct --file studio.hdr --
 Check both the environment background and its effect on the box; background rotation
 and light-source rotation are independent, so set both when rotating the entire world.
 
-## 9. Transparent overlay and ProRes 4444
+## 10. Transparent overlay and ProRes 4444
 
 Keep world illumination but remove the world background for compositing (**box first**).
 
@@ -231,7 +401,7 @@ This is an export command, not an export verification result; check the delivere
 in your editor. A whole-project export composites onto the black canvas;
 `--fx-solo` keeps the layer's alpha. MP4 is not the transparent-overlay format.
 
-## 10. Fog with a spotlight beam
+## 11. Fog with a spotlight beam
 
 Scatter a downward spotlight through a bounded volume (**box first**).
 
@@ -253,7 +423,7 @@ With world lighting present, Volume3D requires `light.integration:"sampled"`;
 a plain ambient environment is not a substitute. Density is per metre at the scene's
 `pixelsPerMeter`; avoid hiding a scale mistake with an enormous density.
 
-## 11. Light linking and a light-group preview
+## 12. Light linking and a light-group preview
 
 Restrict the sun to the box and preview its direct contribution (**box first**).
 
@@ -275,7 +445,7 @@ document, including 2D layers and grading; tell the user before switching it. On
 preview here; declaring `lightGroupRgb` or `indirectLightGroupRgb` does not make them
 selectable. Set `previewOutput:null` to restore the ordinary beauty view.
 
-## 12. IES point light
+## 13. IES point light
 
 Shape a point light with an imported photometric distribution (**box first**).
 
@@ -290,7 +460,7 @@ Check the profile's directional falloff on a receiving surface, not just whether
 IES is supported on **point** emitters only; a spot/area emitter cannot own `iesProfile`.
 The accepted import is LM-63-2002 Type C with `TILT=NONE`.
 
-## 13. Scene3D shutter motion blur
+## 14. Scene3D shutter motion blur
 
 Spin a thin blade during an explicit shutter interval.
 
@@ -318,7 +488,7 @@ cadence. Filmstrip sample spacing is **not** a frame rate: without `--frame-rate
 this path-traced filmstrip fails with “Scene3D shutter exposure requires valid explicit
 output frame timing.” Use the intended delivery cadence, matching export `--fps`.
 
-## 14. Animate an array count
+## 15. Animate an array count
 
 Grow a row from one to five copies using a Group3D array.
 
@@ -333,7 +503,7 @@ Check one, three and five boxes across the filmstrip; count is stepped to an int
 The array belongs to the group and the source mesh is its child, with the parent
 listed first; animate the array's ID 11, not the group's ID 10.
 
-## 15. Bevel then subdivide
+## 16. Bevel then subdivide
 
 Round a box by evaluating an ordered modifier stack.
 
@@ -346,7 +516,7 @@ Round a box by evaluating an ordered modifier stack.
 Check rounded corners and narrow edge highlights; reversing modifier order is not equivalent.
 The modifier records live on Mesh3D, not on its shared geometry Data.
 
-## 16. Shrinkwrap a decal
+## 17. Shrinkwrap a decal
 
 Subdivide an orange patch and project it onto a sphere.
 
@@ -360,7 +530,7 @@ Check the orange patch curving around the blue sphere without z-fighting.
 List target 5 before decal 6, subdivide before shrinkwrap, and use a small positive
 surface offset; a coarse un-subdivided patch cannot follow the curvature.
 
-## 17. Curve3D, FollowPath and aim
+## 18. Curve3D, FollowPath and aim
 
 Move a box along a shared curve while aiming it at a fixed point.
 
@@ -375,7 +545,7 @@ Check travel from upper-left to lower-right with a changing aim toward `[0,0,200
 Curve3D itself is nonrendering; its `dataId` owns the spline. FollowPath runs before
 aim in this stack, and progress animation addresses constraint ID 30.
 
-## 18. Glow on the rendered Scene3D layer
+## 19. Glow on the rendered Scene3D layer
 
 Add a screen-space glow to the Scene3D result (**box first**).
 
@@ -389,7 +559,7 @@ Check a halo around bright box edges; lower the threshold if the source is too d
 The effect belongs to ordinary composition layer 1, not to a Mesh3D child;
 this is post-processing, not a light that illuminates other 3D objects.
 
-## 19. Exposure
+## 20. Exposure
 
 Set a static view exposure and animate the camera exposure (**box first**).
 
@@ -403,7 +573,7 @@ Set a static view exposure and animate the camera exposure (**box first**).
 Check increasing brightness while the box stays in place; camera and view exposure add in stops.
 The view (ID 9 here) is the scene's own exposure; the camera's travels with that camera.
 
-## 20. Clear product glass with a refraction target
+## 21. Clear product glass with a refraction target
 
 Make a clear solid glass sphere against a checker backdrop, with a ground to anchor it.
 Start after `base.json` on the 640×480 canvas described above; save as `glass.json`.
@@ -449,7 +619,7 @@ Avoid these observed failure modes:
 - `ior:1` nearly erased the rim and transmitted the pattern almost unchanged;
   a plain dark backdrop likewise gave much weaker evidence of refraction than the checker.
 
-## 21. Stop on rejected edits
+## 22. Stop on rejected edits
 
 Do not render an old document after a rejected batch: `project apply` exits non-zero.
 
